@@ -194,7 +194,7 @@
 	     :ensure t
 	     :config
 	     (progn 
-	       (setq linum-format "%3d\u2502") ; pretify format
+;	       (setq linum-format "%3d\u2502") ; pretify format
 	       (global-linum-mode 1)))
 
 (use-package highlight-parentheses   ; Parenthesis highlighting globally
