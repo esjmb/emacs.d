@@ -6,9 +6,15 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
+<<<<<<< HEAD
 ;; Last-Updated: Fri Jul 15 15:44:46 2016 (+0100)
 ;;           By: Stephen Barrett
 ;;     Update #: 84
+=======
+;; Last-Updated: Fri Jul 15 18:17:06 2016 (+0100)
+;;           By: Stephen Barrett
+;;     Update #: 107
+>>>>>>> 1309916e783ec126aa3cf836b07d2b9256d65e96
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;; 
@@ -75,8 +81,36 @@
       (indent-region START END)  ; IF active region, use indent-region                                       
     (indent-for-tab-command)))   ; ELSE IF no active region, use default tab command
 (global-set-key (kbd "TAB") 'my/tab-replacement)
-   
-;;
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; customer set variable
+;; reordering to here because smart-mode-line needs it set fuirst
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
+ '(package-selected-packages
+   (quote
+    (cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(company-scrollbar-bg ((t (:background "#454e51"))))
+ '(company-scrollbar-fg ((t (:background "#394143"))))
+ '(company-tooltip ((t (:inherit default :background "#454e51"))))
+ '(company-tooltip-common ((t (:inherit font-lock-constant-face))))
+ '(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
+ '(font-lock-comment-face ((t (:italic t))))
+ '(highlight ((t (:background "grey10" :foreground nil)))))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Add MELPA to package archives.  Also set up use-package so that I
 ;; can use it to manage subsequent package loads.
@@ -118,23 +152,29 @@
 
 (use-package company
   :ensure t
-  :config (progn
-            (add-hook 'after-init-hook 'global-company-mode)
-	    (setq company-idle-delay 0)    ; bring company up immediately
-                                        
-            (use-package color
-              :ensure t
-              :functions color-lighten-name
-              :config (progn
-                        (let ((bg (face-attribute 'default :background)))
-                          (custom-set-faces
-                           `(company-tooltip ((t (:inherit default :background ,
-                                                           (color-lighten-name bg 10)))))
-                           `(company-scrollbar-bg ((t (:background,(color-lighten-name bg 10)))))
-                           `(company-scrollbar-fg ((t (:background ,(color-lighten-name bg 5)))))
-                           `(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
-                           `(company-tooltip-common ((t (:inherit font-lock-constant-face))))))))))
-            
+  :config
+  (progn
+    (add-hook 'after-init-hook 'global-company-mode)
+    (setq company-idle-delay 0)    ; bring company up immediately
+    
+    (use-package color
+      :ensure t
+      :functions color-lighten-name
+      :config
+      (progn
+	(let ((bg (face-attribute 'default :background)))
+	  (custom-set-faces
+	   `(company-tooltip
+	     ((t (:inherit default :background, (color-lighten-name bg 10)))))
+	   `(company-scrollbar-bg
+	     ((t (:background, (color-lighten-name bg 10)))))
+	   `(company-scrollbar-fg
+	     ((t (:background, (color-lighten-name bg 5)))))
+	   `(company-tooltip-selection
+	     ((t (:inherit font-lock-function-name-face))))
+	   `(company-tooltip-common
+	     ((t (:inherit font-lock-constant-face))))))))))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Directories stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -150,7 +190,7 @@
     :bind (("C-c r f" . reveal-in-osx-finder))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; shell stuff
+;; Shell stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (memq window-system '(mac ns))
@@ -165,8 +205,8 @@
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package smex
   :ensure t
-  :bind (("M-x" . smex-major-mode-commands)
-         ("M-X" . smex)
+  :bind (("M-x" . smex)
+         ("M-X" . smex-major-mode-commands)
          ("C-c x x" . execute-extended-command)
          ("C-c s u" . smex-show-unbound-commands))) ; old M-X
 
@@ -224,7 +264,6 @@
   "Check to see if the named FONT is available."
   (if (null (x-list-fonts font))
       nil t))
-
 (defun font-avail (fonts)
   "Finds the available fonts."
   (cl-remove-if-not 'font-existsp fonts))
@@ -242,7 +281,11 @@
     (unless (null fonts)
       (set-face-attribute
        'default nil :font
-       (car fonts))))) 
+       (car fonts)))))
+
+(custom-set-faces      ; set comment face to italic
+ '(font-lock-comment-face ((t (:italic t))))
+ '(font-lock-function-name-face ((t (:italic t)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Haskell Stuff
@@ -360,14 +403,6 @@
 	     (progn
 	       (setq magit-save-repository-buffers 'dontask)))
 
-(use-package git-gutter            ; git gutter globally
-	     :ensure t
-	     :config
-	     (progn 
-	       (global-git-gutter-mode +1)
-	       (git-gutter:linum-setup)
-	       (custom-set-variables
-		'(git-gutter:update-interval 2))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lisp Stuff
@@ -381,34 +416,6 @@
             (auto-compile-on-save-mode)))
 
 (use-package lisp-mode :bind (("C-c C-c" . eval-buffer)))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; End of my stuff
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   (quote
-    ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" default)))
- '(git-gutter:update-interval 2)
- '(package-selected-packages
-   (quote
-    (smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(company-scrollbar-bg ((t (:background "#454e51"))))
- '(company-scrollbar-fg ((t (:background "#394143"))))
- '(company-tooltip ((t (:inherit default :background "#454e51"))))
- '(company-tooltip-common ((t (:inherit font-lock-constant-face))))
- '(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
- '(highlight ((t (:background "grey10" :foreground nil)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; init.el ends here

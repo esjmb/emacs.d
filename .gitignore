@@ -1,2 +1,11 @@
+<<<<<<< HEAD
 elpa
 *.el#
+=======
+.DS_Store
+.haskell-modules.el
+elpa
+smex-items
+auto-save-list
+*.elc
+>>>>>>> 1309916e783ec126aa3cf836b07d2b9256d65e96
