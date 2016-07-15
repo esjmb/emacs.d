@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Fri Jul 15 15:22:30 2016 (+0100)
+;; Last-Updated: Fri Jul 15 15:44:46 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 82
+;;     Update #: 84
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;; 
