@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Fri Jul 15 16:57:20 2016 (+0100)
+;; Last-Updated: Fri Jul 15 17:11:15 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 85
+;;     Update #: 87
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;; 
@@ -179,7 +179,7 @@
     :bind (("C-c r f" . reveal-in-osx-finder))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; shell stuff
+;; Shell stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (memq window-system '(mac ns))
