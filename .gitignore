@@ -2,3 +2,5 @@
 .haskell-modules.el
 elpa
 smex-items
+*.elc
+auto-save-list
