@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Fri Jul 15 17:11:15 2016 (+0100)
+;; Last-Updated: Fri Jul 15 18:12:04 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 87
+;;     Update #: 104
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;; 
@@ -91,7 +91,7 @@
     ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
  '(package-selected-packages
    (quote
-    (smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
+    (cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -102,14 +102,13 @@
  '(company-tooltip ((t (:inherit default :background "#454e51"))))
  '(company-tooltip-common ((t (:inherit font-lock-constant-face))))
  '(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
+ '(font-lock-comment-face ((t (:italic t))))
  '(highlight ((t (:background "grey10" :foreground nil)))))
-
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Add MELPA to package archives.  Also set up use-package so that I
 ;; can use it to manage subsequent package loads.
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (require 'package)
 (add-to-list
@@ -147,23 +146,29 @@
 
 (use-package company
   :ensure t
-  :config (progn
-            (add-hook 'after-init-hook 'global-company-mode)
-	    (setq company-idle-delay 0)    ; bring company up immediately
-                                        
-            (use-package color
-              :ensure t
-              :functions color-lighten-name
-              :config (progn
-                        (let ((bg (face-attribute 'default :background)))
-                          (custom-set-faces
-                           `(company-tooltip ((t (:inherit default :background ,
-                                                           (color-lighten-name bg 10)))))
-                           `(company-scrollbar-bg ((t (:background,(color-lighten-name bg 10)))))
-                           `(company-scrollbar-fg ((t (:background ,(color-lighten-name bg 5)))))
-                           `(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
-                           `(company-tooltip-common ((t (:inherit font-lock-constant-face))))))))))
-            
+  :config
+  (progn
+    (add-hook 'after-init-hook 'global-company-mode)
+    (setq company-idle-delay 0)    ; bring company up immediately
+    
+    (use-package color
+      :ensure t
+      :functions color-lighten-name
+      :config
+      (progn
+	(let ((bg (face-attribute 'default :background)))
+	  (custom-set-faces
+	   `(company-tooltip
+	     ((t (:inherit default :background, (color-lighten-name bg 10)))))
+	   `(company-scrollbar-bg
+	     ((t (:background, (color-lighten-name bg 10)))))
+	   `(company-scrollbar-fg
+	     ((t (:background, (color-lighten-name bg 5)))))
+	   `(company-tooltip-selection
+	     ((t (:inherit font-lock-function-name-face))))
+	   `(company-tooltip-common
+	     ((t (:inherit font-lock-constant-face))))))))))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Directories stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -271,7 +276,10 @@
     (unless (null fonts)
       (set-face-attribute
        'default nil :font
-       (car fonts))))) 
+       (car fonts)))))
+
+(custom-set-faces      ; set comment face to italic
+ '(font-lock-comment-face ((t (:italic t)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Haskell Stuff
