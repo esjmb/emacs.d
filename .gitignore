@@ -1,0 +1,4 @@
+.DS_Store
+.haskell-modules.el
+elpa
+smex-items
