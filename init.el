@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Fri Jul 15 18:12:04 2016 (+0100)
+;; Last-Updated: Fri Jul 15 18:17:06 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 104
+;;     Update #: 107
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;; 
@@ -258,7 +258,6 @@
   "Check to see if the named FONT is available."
   (if (null (x-list-fonts font))
       nil t))
-
 (defun font-avail (fonts)
   "Finds the available fonts."
   (cl-remove-if-not 'font-existsp fonts))
@@ -279,7 +278,8 @@
        (car fonts)))))
 
 (custom-set-faces      ; set comment face to italic
- '(font-lock-comment-face ((t (:italic t)))))
+ '(font-lock-comment-face ((t (:italic t))))
+ '(font-lock-function-name-face ((t (:italic t)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Haskell Stuff
