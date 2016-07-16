@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Fri Jul 15 18:17:06 2016 (+0100)
+;; Last-Updated: Sat Jul 16 16:34:13 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 107
+;;     Update #: 198
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;; 
@@ -64,7 +64,7 @@
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (when (window-system)
-  (progn   ;unbind C-i from tab for later remapping
+  (progn   ; unbind C-i from tab for later remapping
     (define-key input-decode-map (kbd "C-i") (kbd "H-i"))))  
 
 ;; rebind tab key to indent region if active, or default tab
@@ -75,6 +75,16 @@
       (indent-region START END)  ; IF active region, use indent-region                                       
     (indent-for-tab-command)))   ; ELSE IF no active region, use default tab command
 (global-set-key (kbd "TAB") 'my/tab-replacement)
+
+;; key bindings for window manipulation
+(global-set-key (kbd "M-1") 'delete-other-windows)
+(global-set-key (kbd "M-(") 'delete-otherwindow) ; for progrmmers keyboard
+(global-set-key (kbd "M-2") 'split-window-below)
+(global-set-key (kbd "M-)") 'split-window-below) ; for progrmmers keyboard
+(global-set-key (kbd "M-3") 'split-window-right) 
+(global-set-key (kbd "M-}") 'split-window-right) ; for progrmmers keyboard
+(global-set-key (kbd "M-o") 'other-window)
+
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; customer set variable
@@ -91,7 +101,7 @@
     ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
  '(package-selected-packages
    (quote
-    (cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
+    (line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -103,6 +113,7 @@
  '(company-tooltip-common ((t (:inherit font-lock-constant-face))))
  '(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
  '(font-lock-comment-face ((t (:italic t))))
+ '(font-lock-function-name-face ((t (:italic t))))
  '(highlight ((t (:background "grey10" :foreground nil)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -139,6 +150,36 @@
   :config (progn
             (setq sml/theme 'dark)
             (sml/setup)))
+
+(setq column-number-mode t)           ; display cursor position in mode-line
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Last Command
+;; The following code displays the last run command on the mode-line.
+;; Basic approach is lifted from gnus-notify.el, which adds email
+;; message notifications to the mode line.
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defvar display-new-message "")
+(defun notify-modeline-form ()
+  display-new-message)
+
+(if (featurep 'xemacs)
+    (unless (member 'display-new-messages global-mode-string)
+      (if (null global-mode-string)
+          (setq global-mode-string '("" display-new-messages))
+        (setq global-mode-string
+              (append global-mode-string
+                      '(display-new-messages)))))
+  (unless (member '(:eval (notify-modeline-form)) global-mode-string)
+    (setq global-mode-string
+          (append global-mode-string
+                  (list '(:eval (notify-modeline-form)))))))
+
+(defadvice call-interactively (after show-last-command activate)
+  "Shows the interactive command that was just run in the message area."
+  (unless (eq major-mode 'minibuffer-inactive-mode)
+    (setq display-new-message (format "[cmd: %s]" this-command))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Company - completion mode
@@ -244,11 +285,24 @@
 
 (setq comment-auto-fill-only-comments t)        ; auto fill comment lines
 (setq-default auto-fill-function 'do-auto-fill)
+
 (setq indent-tabs-mode nil)                     ; use spaces, not <tab>
 
+(use-package expand-region                ; structured region expansion
+  :ensure t  
+  :bind (("C-," . er/expand-region)       ; C-, and C-. for expand/contract
+	 ("C-." . er/contract-region))
+  :config (progn                          ; delete region text on typing
+            (delete-selection-mode 1))) 
+                                        
+(use-package iy-go-to-char               ; see emacs rocks episode 4
+  :ensure t                              ; https://github.com/doitian/iy-go-to-char
+  :bind (("M-]" . iy-go-to-char)
+         ("M-[" . iy-go-to-char-backward)))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Font Selection
-;; Ordered for clarity of symbols for haskell programming. the list of
+;; font selection
+;; ordered for clarity of symbols for haskell programming. the list of
 ;; font-preferences is reduced to those fonts installed, and then
 ;; the first available font is selected, if any are available.
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -276,10 +330,6 @@
       (set-face-attribute
        'default nil :font
        (car fonts)))))
-
-(custom-set-faces      ; set comment face to italic
- '(font-lock-comment-face ((t (:italic t))))
- '(font-lock-function-name-face ((t (:italic t)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Haskell Stuff
