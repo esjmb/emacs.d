@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Mon Aug  8 14:43:27 2016 (+0100)
+;; Last-Updated: Mon Aug  8 15:00:10 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 795
+;;     Update #: 798
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;;
@@ -461,11 +461,10 @@
                       (kill-region start end)
                       (make-box-comment end-col)
                       (insert (replace-regexp-in-string "\n" (concat "\n" (header-prefix-string))
-                                                        (replace-regexp-in-string (concat "^[ \t"
+                                                        (replace-regexp-in-string (concat "^[ \t]+"
                                                                                           (nonempty-comment-start)
-                                                                                          "]+")
+                                                                                          )
                                                                                   "" selection))))))))
-            
             (add-hook 'emacs-lisp-mode-hook 'auto-make-header)
             (add-hook 'c-mode-common-hook   'auto-make-header)
             (add-hook 'haskell-mode-hook    'auto-make-header)           
