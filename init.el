@@ -6,12 +6,12 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Sat Jul 16 16:38:31 2016 (+0100)
+;; Last-Updated: Fri Aug  5 22:45:24 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 199
+;;     Update #: 649
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
-;; 
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Commentary: This is my basic emacs configuration. Feel free to
@@ -57,7 +57,43 @@
 (blink-cursor-mode 0)                 ; stop blinking cursor
 (setq-default cursor-type '(bar . 3)) ; set cursor to bar
 (when (memq window-system '(mac ns))  ; fix mac mouse scrolling
-  (setq mouse-wheel-scroll-amount '(0.01)))
+  (setq mouse-wheel-scroll-amount '(1 ((shift) . 6) ((control) . nil)) ;
+        mouse-wheel-progressive-speed nil
+        scroll-error-top-bottom t
+        scroll-preserve-screen-position nil
+        scroll-margin 10                  
+        scroll-conservatively 100000))
+                                        
+;; set tripple wheel gestures to cycle buffers
+(defvar *my-previous-buffer* t
+  "can we switch?")
+
+(defun my-previous-buffer ()
+  (interactive)
+  ;(message "custom prev: *my-previous-buffer*=%s" *my-previous-buffer*)
+  (when *my-previous-buffer*
+    (previous-buffer)
+    (setq *my-previous-buffer* nil)
+    (run-at-time "1 sec" nil (lambda ()
+                               (setq *my-previous-buffer* t)))))
+
+(defvar *my-next-buffer* t
+  "can we switch?")
+
+(defun my-next-buffer ()
+  (interactive)
+  ;(message "custom prev: *my-next-buffer*=%s" *my-next-buffer*)
+  (when *my-next-buffer*
+    (next-buffer)
+    (setq *my-next-buffer* nil)
+    (run-at-time "1 sec" nil (lambda ()
+                               (setq *my-next-buffer* t)))))
+
+(global-set-key [triple-wheel-right] 'my-previous-buffer)
+(global-set-key [triple-wheel-left] 'my-next-buffer)
+(global-set-key [double-wheel-right] 'ignore)
+(global-set-key [wheel-left] 'ignore)
+(global-set-key [wheel-right] 'ignore)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global key bindings
@@ -85,6 +121,9 @@
 (global-set-key (kbd "M-}") 'split-window-right) ; for progrmmers keyboard
 (global-set-key (kbd "M-o") 'other-window)
 
+;; set M-n and M-p to next and previous lines
+(global-set-key (kbd "M-n") 'next-line)
+(global-set-key (kbd "M-p") 'previous-line)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; customer set variable
@@ -101,7 +140,11 @@
     ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
  '(package-selected-packages
    (quote
-    (line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
+    (fill-column-indicator smooth-scroll smooth-scrolling centered-cursor-mode flycheck magit-popup rich-minority
+                           use-package line-number-mode iy-go-to-char expand-region magit dash-at-point
+                           highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face
+                           color-theme smart-mode-line smex header2 haskell-complete-module auto-compile
+                           haskell-mode intero))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -113,7 +156,9 @@
  '(company-tooltip-common ((t (:inherit font-lock-constant-face))))
  '(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
  '(font-lock-comment-face ((t (:italic t))))
+ '(font-lock-comment-warning-face ((t (:background "grey10" :foreground nil))))
  '(font-lock-function-name-face ((t (:italic t))))
+ '(font-lock-warning-face ((t (:background "grey10" :foreground nil))))
  '(highlight ((t (:background "grey10" :foreground nil)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -155,13 +200,19 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Last Command
-;; The following code displays the last run command on the mode-line.
+;; The following code displays the last run command on the mode-line,
+;; along with the keystrokes.
 ;; Basic approach is lifted from gnus-notify.el, which adds email
 ;; message notifications to the mode line.
+;;
+;; TODO: improve formatting of output so that pointless outputs like
+;; self-insert-command for normal keystrokes are not presented.
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar display-new-message "")
-(defun notify-modeline-form ()
+(use-package cl :ensure t)
+
+(defvar display-new-message-sb "")
+(defun notify-modeline-form-sb ()
   display-new-message)
 
 (if (featurep 'xemacs)
@@ -171,16 +222,100 @@
         (setq global-mode-string
               (append global-mode-string
                       '(display-new-messages)))))
-  (unless (member '(:eval (notify-modeline-form)) global-mode-string)
+  (unless (member '(:eval (notify-modeline-form-sb)) global-mode-string)
     (setq global-mode-string
           (append global-mode-string
-                  (list '(:eval (notify-modeline-form)))))))
+                  (list '(:eval (notify-modeline-form-sb)))))))
+
+(defun execute-extended-command--shorter-1 (name length end-time)
+    (cond
+     ;((not (time-less-p (current-time) end-time)) nil)
+     ((zerop length) (list ""))
+     ((equal name "") nil)
+     (t
+      (nconc (mapcar (lambda (s) (concat (substring name 0 1) s))
+                     (execute-extended-command--shorter-1
+                      (substring name 1) (1- length) end-time))
+             (when (string-match "\\`\\(-\\)?[^-]*" name)
+               (execute-extended-command--shorter-1
+                (substring name (match-end 0)) length end-time))))))
+
+(defun execute-extended-command--shorter-sb (name)
+  (let ((candidates '())
+        (max (length name))
+        (len 1)
+        binding
+        (end-time (time-add (current-time) (seconds-to-time 1))))
+    (while (and (not binding)
+                (time-less-p (current-time) end-time) ; timeout fail
+                (progn
+                  (unless candidates
+                    (setq len (1+ len))
+                    (setq candidates (execute-extended-command--shorter-1
+                                      name len end-time)))
+                  ;; Don't show the help message if the binding isn't
+                  ;; significantly shorter than the M-x command the user typed.
+                  (< len (- max 5))))
+      (let ((candidate (pop candidates)))
+        (when (equal name
+                       (car-safe (completion-try-completion
+                                  candidate obarray 'commandp len)))
+          (setq binding candidate))))
+    binding))
+
+(defvar extended-command-hash (make-hash-table :test 'equal))
+(defun generate-extended-command--shorter-sb (name)
+  "Simple caching function to prevent recalculation of shortened command form."
+  (let ((val (gethash name extended-command-hash)))
+    (if (not val)
+        (let ((val (execute-extended-command--shorter-sb name)))
+          (puthash name val extended-command-hash)
+          val)          
+      val)))
 
 (defadvice call-interactively (after show-last-command activate)
   "Shows the interactive command that was just run in the message area."
-  (unless (eq major-mode 'minibuffer-inactive-mode)
-    (setq display-new-message (format "[cmd: %s]" this-command))))
+  (unless (or (eq major-mode 'minibuffer-inactive-mode)
+              (not (symbolp real-this-command)))
 
+    (let* ((tc (symbol-name real-this-command)))  ; don't use 'this-command' !
+      (unless (or (string= "isearch-printing-char" tc)
+                  (cl-search "mouse-" tc)         ; do not change bar
+                  (cl-search "wheel-" tc) 
+                  (cl-search "isearch-repeat" tc)                                
+                  (cl-search "company-ignore" tc)
+                  (cl-search "company-select" tc)
+                  (cl-search "company-complete" tc)
+                  (cl-search "ignore" tc))
+
+        (if (or (<= (length tc) 4)
+                (string= "self-insert-command" real-this-command))  ; clear if non command pressed
+            (setq display-new-message "")
+          (when (not (string= real-this-command "nil"))
+            (let* ((kd (key-description (this-command-keys)))
+                   (seq (lambda (x)
+                          (or (string= x kd)
+                              (cl-search "<me" x)
+                              (cl-search "wheel-" x))))
+                   
+                   (kda (mapcar 'key-description
+                                (where-is-internal real-this-command overriding-local-map nil)))
+                   (mem (member kd kda)) ;  
+                   (kdas (mapconcat 'identity (cl-remove-if seq kda) ", "))
+                   (str (format "%s%s" kdas   ; append an M-x shortened version of command             
+                                (if (not mem) 
+                                    (let ((s (generate-extended-command--shorter-sb tc)))
+                                      (if (or (string= "" s)(string= "nil" s)) ""
+					(format ", M-x %s" s)))
+                                  ""))))
+              (progn 
+                (setq display-new-message                
+                      (format "%s%s%s  "
+                              (if mem (format "%s : " kd) "")
+                              real-this-command 
+                              (if (string= "" str) ""
+                                (format ": %s" str))))))))))))
+  
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Company - completion mode
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -214,11 +349,14 @@
 ;; Directories stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq default-directory "~/")       ; default directory
-(setq backup-directory-alist        ; backups to single directory
-      '(("." . "~/MyEmacsBackups")))
-(setq insert-directory-program      ; use gls for dired 
+(setq default-directory "~/"             ; default directory
+      backup-directory-alist             ; backups to single directory
+             '(("." . "~/MyEmacsBackups"))
+      delete-by-moving-to-trash t        ; Move to trash when deleting stuff
+      trash-directory "~/.Trash/emacs"
+      insert-directory-program           ; use gls for dired 
       (executable-find "gls"))
+
 (when (memq window-system '(mac ns)) ; enable finder open on mac
   (use-package reveal-in-osx-finder  
     :ensure t
@@ -283,10 +421,11 @@
      'after-change-functions
      '(lambda (&rest x) (hl-paren-highlight)))))
 
-(setq comment-auto-fill-only-comments t)        ; auto fill comment lines
-(setq-default auto-fill-function 'do-auto-fill)
+(setq comment-auto-fill-only-comments t  ; auto fill comment lines
+      indent-tabs-mode nil)              ; use spaces, not <tab>
 
-(setq indent-tabs-mode nil)                     ; use spaces, not <tab>
+(setq-default auto-fill-function 'do-auto-fill)
+(setq-default fill-column 120)            ; we're not in the 70s
 
 (use-package expand-region                ; structured region expansion
   :ensure t  
@@ -300,6 +439,29 @@
   :bind (("M-]" . iy-go-to-char)
          ("M-[" . iy-go-to-char-backward)))
 
+(define-globalized-minor-mode my-global-fci-mode fci-mode turn-on-fci-mode)
+(use-package fill-column-indicator 
+  :ensure t 
+  :config (progn   
+            (my-global-fci-mode 1)
+	    (setq fci-rule-use-dashes t)
+ 
+            ; disable fill-column-indicator if company mode is live
+            (defvar-local company-fci-mode-on-p nil)
+
+            (defun company-turn-off-fci (&rest ignore)
+              (when (boundp 'fci-mode)
+                (setq company-fci-mode-on-p fci-mode)
+                (when fci-mode (fci-mode -1))))
+            
+            (defun company-maybe-turn-on-fci (&rest ignore)
+              (when company-fci-mode-on-p (fci-mode 1)))
+            
+            (add-hook 'company-completion-started-hook 'company-turn-off-fci)
+            (add-hook 'company-completion-finished-hook 'company-maybe-turn-on-fci)
+            (add-hook 'company-completion-cancelled-hook 'company-maybe-turn-on-fci)
+            ))
+            
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; font selection
 ;; ordered for clarity of symbols for haskell programming. the list of
