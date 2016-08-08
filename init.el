@@ -1,14 +1,14 @@
 ;;; init.el --- 
-;;    
+;; 
 ;; Filename: init.el
 ;; Description: My config for emacs.
 ;; Author: Stephen Barrett
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Fri Aug  5 22:45:24 2016 (+0100)
+;; Last-Updated: Mon Aug  8 14:43:27 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 649
+;;     Update #: 795
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;;
@@ -41,7 +41,7 @@
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
-;;; Code:
+;;; Code: 
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; some basic gui settings
@@ -63,8 +63,11 @@
         scroll-preserve-screen-position nil
         scroll-margin 10                  
         scroll-conservatively 100000))
-                                        
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set tripple wheel gestures to cycle buffers
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defvar *my-previous-buffer* t
   "can we switch?")
 
@@ -97,7 +100,7 @@
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global key bindings
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 
 (when (window-system)
   (progn   ; unbind C-i from tab for later remapping
@@ -213,7 +216,7 @@
 
 (defvar display-new-message-sb "")
 (defun notify-modeline-form-sb ()
-  display-new-message)
+  display-new-message-sb)
 
 (if (featurep 'xemacs)
     (unless (member 'display-new-messages global-mode-string)
@@ -267,71 +270,99 @@
 (defun generate-extended-command--shorter-sb (name)
   "Simple caching function to prevent recalculation of shortened command form."
   (let ((val (gethash name extended-command-hash)))
-    (if (not val)
+    (if (not val) 
         (let ((val (execute-extended-command--shorter-sb name)))
           (puthash name val extended-command-hash)
           val)          
       val)))
+
+(defvar display-new-message-hash (make-hash-table :test 'equal))
 
 (defadvice call-interactively (after show-last-command activate)
   "Shows the interactive command that was just run in the message area."
   (unless (or (eq major-mode 'minibuffer-inactive-mode)
               (not (symbolp real-this-command)))
 
-    (let* ((tc (symbol-name real-this-command)))  ; don't use 'this-command' !
-      (unless (or (string= "isearch-printing-char" tc)
-                  (cl-search "mouse-" tc)         ; do not change bar
-                  (cl-search "wheel-" tc) 
-                  (cl-search "isearch-repeat" tc)                                
-                  (cl-search "company-ignore" tc)
-                  (cl-search "company-select" tc)
-                  (cl-search "company-complete" tc)
-                  (cl-search "ignore" tc))
+    (let* ((tc (symbol-name real-this-command))  ; don't use 'this-command' !
+           (val (gethash tc display-new-message-hash))) ; cache previous string generations
+      (if (bound-and-true-p val)
+          (setq display-new-message-sb val)
+        ;; TODO: clean up this by creating a variable that end user can add search strings to
+        (unless (or (string= "isearch-printing-char" tc)
+                    (cl-search "mouse-" tc)         ; do not change bar
+                    (cl-search "wheel-" tc) 
+                    (cl-search "isearch-repeat" tc)                                
+                    (cl-search "company-ignore" tc)
+                    (cl-search "company-select" tc)
+                    (cl-search "company-complete" tc)
+                    (cl-search "ignore" tc))
+          
+          (if (or (<= (length tc) 4)
+                  (string= "self-insert-command" real-this-command))  ; clear if non command pressed
+              (setq display-new-message-sb "")
+            (when (not (string= real-this-command "nil"))
+              (let* ((kd (key-description (this-command-keys)))
+                     (seq (lambda (x)
+                            (or (string= x kd)
+                                (cl-search "<me" x)
+                                (cl-search "wheel-" x))))
+                     
+                     (kda (mapcar 'key-description
+                                  (where-is-internal real-this-command overriding-local-map nil)))
+                     (mem (member kd kda)) ;  
+                     (kdas (mapconcat 'identity (cl-remove-if seq kda) ", "))
+                     (str (format "%s%s" kdas   ; append an M-x shortened version of command             
+                                  (if (not mem) 
+                                      (let ((s (generate-extended-command--shorter-sb tc)))
+                                        (if (or (string= "" s)(string= "nil" s)) ""
+                                          (format ", M-x %s" s)))
+                                    "")))
+                     (dstr  (format "%s%s%s  "
+                                    (if mem (format "%s : " kd) "")
+                                    real-this-command 
+                                    (if (string= "" str) ""
+                                      (format ": %s" str)))))
+                (progn
+                  (puthash tc dstr display-new-message-hash)
+                  (setq display-new-message-sb dstr ))))))))))
 
-        (if (or (<= (length tc) 4)
-                (string= "self-insert-command" real-this-command))  ; clear if non command pressed
-            (setq display-new-message "")
-          (when (not (string= real-this-command "nil"))
-            (let* ((kd (key-description (this-command-keys)))
-                   (seq (lambda (x)
-                          (or (string= x kd)
-                              (cl-search "<me" x)
-                              (cl-search "wheel-" x))))
-                   
-                   (kda (mapcar 'key-description
-                                (where-is-internal real-this-command overriding-local-map nil)))
-                   (mem (member kd kda)) ;  
-                   (kdas (mapconcat 'identity (cl-remove-if seq kda) ", "))
-                   (str (format "%s%s" kdas   ; append an M-x shortened version of command             
-                                (if (not mem) 
-                                    (let ((s (generate-extended-command--shorter-sb tc)))
-                                      (if (or (string= "" s)(string= "nil" s)) ""
-					(format ", M-x %s" s)))
-                                  ""))))
-              (progn 
-                (setq display-new-message                
-                      (format "%s%s%s  "
-                              (if mem (format "%s : " kd) "")
-                              real-this-command 
-                              (if (string= "" str) ""
-                                (format ": %s" str))))))))))))
-  
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Company - completion mode
+;; Company - completion mode 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package company
   :ensure t
   :config
-  (progn
+  (progn 
     (add-hook 'after-init-hook 'global-company-mode)
+
+    ;; add dabbrev to company globally 
+    (defun company-my-setup ()
+      (when (boundp 'company-backends)
+        (make-local-variable 'company-backends)
+        ;; remove
+        ;(setq company-backends (delete 'company-dabbrev company-backends))
+        ;; add 
+        (add-to-list 'company-backends 'company-dabbrev)
+        (add-to-list 'company-backends 'company-ispell)
+	(add-to-list 'company-backends 'company-files t)
+	(setq company-dabbrev-other-buffers 'all)
+        (setq company-dabbrev-ignore-buffers "nil")
+        (setq company-dabbrev-downcase nil)
+        (setq company-tooltip-limit 20)))  
+    (add-hook 'after-init-hook 'company-my-setup) 
+    ;; this is a text 
     (setq company-idle-delay 0)    ; bring company up immediately
     
     (use-package color
       :ensure t
       :functions color-lighten-name
       :config
-      (progn
+      (progn 
+        (use-package company-quickhelp
+          :ensure t
+          :config (progn 
+                    (company-quickhelp-mode 1)))
 	(let ((bg (face-attribute 'default :background)))
 	  (custom-set-faces
 	   `(company-tooltip
@@ -344,6 +375,33 @@
 	     ((t (:inherit font-lock-function-name-face))))
 	   `(company-tooltip-common
 	     ((t (:inherit font-lock-constant-face))))))))))
+
+;; php company stuff
+(defun my-php ()
+  (add-to-list 'company-backends 'company-my-php-backend))
+
+(defvar my-php-symbol-hash "")
+(add-hook 'php-mode-hook 'my-php)
+(defun company-my-php-backend (command &optional arg &rest ignored)
+  (case command
+    (prefix (and (eq major-mode 'php-mode)
+                 (company-grab-symbol)))
+    (sorted t)
+    (candidates (all-completions
+                 arg
+                 (if (and (boundp 'my-php-symbol-hash)
+                          my-php-symbol-hash)
+                     my-php-symbol-hash
+                   
+                   (with-temp-buffer
+                     (call-process-shell-command
+                      "php -r '$all=get_defined_functions();foreach ($all[\"internal\"] as $fun) { echo $fun . \";\";};'"
+                      nil t)
+                     (goto-char (point-min))
+                     (let ((hash (make-hash-table)))
+                       (while (re-search-forward "\\([^;]+\\);" (point-max) t)
+                         (puthash (match-string 1) t hash))
+                       (setq my-php-symbol-hash hash))))))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Directories stuff
@@ -387,16 +445,35 @@
 ;; File headers with header2
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (use-package header2
   :ensure t
   :config (progn
+            (defun make-box-comment-with-region (start end &optional end-col)
+              "Make a box comment with region, if active."
+              (interactive "r\nP")                 
+              (if (not (use-region-p))
+                  (make-box-comment end-col)
+                (let ((selection (buffer-substring start end)))
+                  (if (= (length selection) 0)
+                      (make-box-comment end-col)
+                    (progn
+                      (kill-region start end)
+                      (make-box-comment end-col)
+                      (insert (replace-regexp-in-string "\n" (concat "\n" (header-prefix-string))
+                                                        (replace-regexp-in-string (concat "^[ \t"
+                                                                                          (nonempty-comment-start)
+                                                                                          "]+")
+                                                                                  "" selection))))))))
+            
             (add-hook 'emacs-lisp-mode-hook 'auto-make-header)
             (add-hook 'c-mode-common-hook   'auto-make-header)
             (add-hook 'haskell-mode-hook    'auto-make-header)           
             (add-hook 'write-file-hooks 'auto-update-file-header))  
   :bind (("C-h C-h" . make-header)
          ("C-h C-r" . make-revision)
-         ("C-h C-b" . make-box-comment)))
+         ("C-h C-b" . make-box-comment-with-region)))
+
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General text editing stuff
@@ -439,15 +516,19 @@
   :bind (("M-]" . iy-go-to-char)
          ("M-[" . iy-go-to-char-backward)))
 
+
+
 (define-globalized-minor-mode my-global-fci-mode fci-mode turn-on-fci-mode)
+(my-global-fci-mode 1)
+
+; disable fill-column-indicator if company mode is live
+(defvar-local company-fci-mode-on-p nil)
+            
 (use-package fill-column-indicator 
-  :ensure t 
+  :ensure t
+  :defines fci-rule-use-dashes
   :config (progn   
-            (my-global-fci-mode 1)
-	    (setq fci-rule-use-dashes t)
- 
-            ; disable fill-column-indicator if company mode is live
-            (defvar-local company-fci-mode-on-p nil)
+            (setq fci-rule-use-dashes t)
 
             (defun company-turn-off-fci (&rest ignore)
               (when (boundp 'fci-mode)
@@ -459,8 +540,7 @@
             
             (add-hook 'company-completion-started-hook 'company-turn-off-fci)
             (add-hook 'company-completion-finished-hook 'company-maybe-turn-on-fci)
-            (add-hook 'company-completion-cancelled-hook 'company-maybe-turn-on-fci)
-            ))
+            (add-hook 'company-completion-cancelled-hook 'company-maybe-turn-on-fci)))
             
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; font selection
