@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Mon Aug  8 15:00:10 2016 (+0100)
+;; Last-Updated: Mon Aug  8 15:15:38 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 798
+;;     Update #: 812
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;;
@@ -441,10 +441,9 @@
          ("C-c x x" . execute-extended-command)
          ("C-c s u" . smex-show-unbound-commands))) ; old M-X
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File headers with header2
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package header2
   :ensure t
@@ -460,11 +459,12 @@
                     (progn
                       (kill-region start end)
                       (make-box-comment end-col)
-                      (insert (replace-regexp-in-string "\n" (concat "\n" (header-prefix-string))
-                                                        (replace-regexp-in-string (concat "^[ \t]+"
-                                                                                          (nonempty-comment-start)
-                                                                                          )
-                                                                                  "" selection))))))))
+                      (insert (replace-regexp-in-string
+                               "\n" (concat "\n" (header-prefix-string))
+                               (replace-regexp-in-string
+                                (concat "^[ \t" (nonempty-comment-start) "]+["
+                                        (nonempty-comment-start) "]+")
+                                "" selection))))))))
             (add-hook 'emacs-lisp-mode-hook 'auto-make-header)
             (add-hook 'c-mode-common-hook   'auto-make-header)
             (add-hook 'haskell-mode-hook    'auto-make-header)           
@@ -472,7 +472,6 @@
   :bind (("C-h C-h" . make-header)
          ("C-h C-r" . make-revision)
          ("C-h C-b" . make-box-comment-with-region)))
-
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General text editing stuff
