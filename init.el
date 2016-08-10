@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Mon Aug  8 15:15:38 2016 (+0100)
+;; Last-Updated: Wed Aug 10 21:38:17 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 812
+;;     Update #: 849
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;;
@@ -43,18 +43,55 @@
 ;; 
 ;;; Code: 
 
+;; lets just abort a load with warning is we are running emacs < 23
+
+
+(if (version< emacs-version "23.3")
+    (error "Init file only supports > 23.3 Aborting load. Try installing a newer version of emacs"))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Add MELPA to package archives.  Also set up use-package so that I
+;; can use it to manage subsequent package loads.
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(when (>= emacs-major-version 24)
+  (require 'package)
+  (add-to-list
+   'package-archives
+   '("melpa" . "http://melpa.org/packages/") t)
+  (package-initialize)
+  (unless package-archive-contents ; fetch the list of packages available 
+    (package-refresh-contents))
+  (unless (package-installed-p 'use-package) ; integrate use-package
+    (package-refresh-contents)
+  (package-install 'use-package))
+  (eval-when-compile (require 'use-package))
+  (use-package diminish :ensure t)
+  (use-package bind-key :ensure t)
+  (use-package package-utils
+    :ensure t
+    :config (progn
+	      (defun package-upgrade-all () ; easier to remember than M-x -upg
+		(interactive)
+		(package-utils-upgrade-all)))))
+
+(setq custom-safe-themes t)
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; some basic gui settings
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
- 
-(tool-bar-mode -1)                    ; no toolbar 
-(menu-bar-mode -1)                    ; no menu
+
+(if window-system 
+    (progn 
+      (tool-bar-mode -1)              ; no toolbar 
+      (menu-bar-mode -1)))             ; no menu
+
 (setq inhibit-startup-message t)      ; hide welcome screne
 (setq ring-bell-function 'ignore)     ; inhibit bell - it's annoying
 (setq echo-keystrokes 0.01)           ; immediate echo
-(load-theme 'tango-dark)              ; set tango-dark as theme
 (global-hl-line-mode t)               ; highlight the current line
 (blink-cursor-mode 0)                 ; stop blinking cursor
+(load-theme 'tango-dark)
 (setq-default cursor-type '(bar . 3)) ; set cursor to bar
 (when (memq window-system '(mac ns))  ; fix mac mouse scrolling
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 6) ((control) . nil)) ;
@@ -143,11 +180,7 @@
     ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
  '(package-selected-packages
    (quote
-    (fill-column-indicator smooth-scroll smooth-scrolling centered-cursor-mode flycheck magit-popup rich-minority
-                           use-package line-number-mode iy-go-to-char expand-region magit dash-at-point
-                           highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face
-                           color-theme smart-mode-line smex header2 haskell-complete-module auto-compile
-                           haskell-mode intero))))
+    (ghc-imported-from fill-column-indicator smooth-scroll smooth-scrolling centered-cursor-mode flycheck magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -164,30 +197,6 @@
  '(font-lock-warning-face ((t (:background "grey10" :foreground nil))))
  '(highlight ((t (:background "grey10" :foreground nil)))))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Add MELPA to package archives.  Also set up use-package so that I
-;; can use it to manage subsequent package loads.
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(require 'package)
-(add-to-list
-  'package-archives
-  '("melpa" . "http://melpa.org/packages/") t)
-(package-initialize)
-(unless package-archive-contents ; fetch the list of packages available 
-  (package-refresh-contents))
-(unless (package-installed-p 'use-package) ; integrate use-package
-  (package-refresh-contents)
-  (package-install 'use-package))
-(eval-when-compile (require 'use-package))
-(use-package diminish :ensure t)
-(use-package bind-key :ensure t)
-(use-package package-utils
-  :ensure t
-  :config (progn
-	    (defun package-upgrade-all () ; easier to remember than M-x -upg
-	      (interactive)
-	      (package-utils-upgrade-all))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mode line
@@ -441,37 +450,52 @@
          ("C-c x x" . execute-extended-command)
          ("C-c s u" . smex-show-unbound-commands))) ; old M-X
 
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File headers with header2
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; sksdjksd
+;; ; sdsdsd
+;; sdsdsd
+;; 
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (use-package header2
   :ensure t
   :config (progn
-            (defun make-box-comment-with-region (start end &optional end-col)
-              "Make a box comment with region, if active."
-              (interactive "r\nP")                 
-              (if (not (use-region-p))
+            (defun make-box-comment-region-sb (&optional end-col start end)
+              "Wrap active region in a box comment, or make an empty box comment.
+               The maxium width is `fill-column', by default.  With a numeric prefix
+               arg, use that as the maximum width, except use at least 2 + the length
+               returned by function `header-prefix-string'."
+              (interactive "P\nr")
+              (setq end-col  (if end-col (prefix-numeric-value end-col) fill-column))
+              (if (not (and mark-active  (mark)  (> (region-end) (region-beginning))))
                   (make-box-comment end-col)
-                (let ((selection (buffer-substring start end)))
-                  (if (= (length selection) 0)
-                      (make-box-comment end-col)
-                    (progn
-                      (kill-region start end)
-                      (make-box-comment end-col)
-                      (insert (replace-regexp-in-string
+                (let ((selection  (buffer-substring start end)))
+                  (kill-region start end)
+                  (make-box-comment end-col)
+                  (insert (replace-regexp-in-string
                                "\n" (concat "\n" (header-prefix-string))
                                (replace-regexp-in-string
-                                (concat "^[ \t" (nonempty-comment-start) "]+["
-                                        (nonempty-comment-start) "]+")
-                                "" selection))))))))
+                                (concat "^[ \t]*[" (nonempty-comment-start) "]*")
+                                "" selection))))))
+            
             (add-hook 'emacs-lisp-mode-hook 'auto-make-header)
             (add-hook 'c-mode-common-hook   'auto-make-header)
             (add-hook 'haskell-mode-hook    'auto-make-header)           
             (add-hook 'write-file-hooks 'auto-update-file-header))  
   :bind (("C-h C-h" . make-header)
          ("C-h C-r" . make-revision)
-         ("C-h C-b" . make-box-comment-with-region)))
+         ("C-h C-b" . make-box-comment-region-sb)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General text editing stuff
@@ -587,6 +611,7 @@
   (progn
     (setq haskell-font-lock-symbols 'unicode)
     (setq haskell-stylish-on-save t)
+    (define-key haskell-mode-map (kbd "<f12>") 'haskell-process-reload-devel-main)
 
     ;; code for nice nested indent
     (defun haskell-move-right ()  
@@ -656,6 +681,16 @@
       :config
       (progn 
         (add-hook 'haskell-mode-hook 'intero-mode)))))
+
+;; ghc-imported-from - front end for ghc-imported-from for finding haddock documentation
+;; for symbols in
+(use-package ghc-imported-from
+  :ensure t
+  :config (progn
+            (eval-after-load 'haskell-mode
+              `(define-key haskell-mode-map
+                 (kbd "C-c C-d d")
+                 #'ghc-imported-from-haddock-for-symbol-at-point))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Dash API Document Browser
