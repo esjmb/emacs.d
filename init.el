@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Thu Aug 11 11:13:02 2016 (+0100)
+;; Last-Updated: Thu Aug 11 11:57:59 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 941
+;;     Update #: 952
 ;; Keywords: emacs config
 ;; Compatibility: GNU Emacs: 25.x
 ;;  
@@ -18,14 +18,7 @@
 ;; grab anything useful. init.el lives in ~/.emacs.d
 ;; 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;; Change Log:
-;; 14-Jul-2016    Stephen Barrett  
-;;    Initial pass. Basic support for lisp and haskell execution and
-;; some default gui behaviour.  Tuned for use on mac.
-;; 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
+;;  
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or (at
@@ -75,24 +68,17 @@
 		(interactive)
 		(package-utils-upgrade-all)))))
 
-(setq custom-safe-themes t)
-
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; some basic gui settings
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 
 (if window-system 
     (progn 
       (tool-bar-mode -1)              ; no toolbar 
       (menu-bar-mode -1)))             ; no menu
 
-(setq inhibit-startup-message t)      ; hide welcome screne
-(setq ring-bell-function 'ignore)     ; inhibit bell - it's annoying
-(setq echo-keystrokes 0.01)           ; immediate echo
-(global-hl-line-mode t)               ; highlight the current line
-(blink-cursor-mode 0)                 ; stop blinking cursor
-(load-theme 'tango-dark)
-(setq-default cursor-type '(bar . 3)) ; set cursor to bar
 (when (memq window-system '(mac ns))  ; fix mac mouse scrolling
   (setq mouse-wheel-scroll-amount '(1 ((shift) . 6) ((control) . nil)) ;
         mouse-wheel-progressive-speed nil
@@ -100,6 +86,15 @@
         scroll-preserve-screen-position nil
         scroll-margin 10                  
         scroll-conservatively 100000))
+
+(setq inhibit-startup-message t)      ; hide welcome screne
+(setq ring-bell-function 'ignore)     ; inhibit bell - it's annoying
+(setq echo-keystrokes 0.01)           ; immediate echo
+(global-hl-line-mode t)               ; highlight the current line
+(blink-cursor-mode 0)                 ; stop blinking cursor
+(setq custom-safe-themes t)
+(load-theme 'tango-dark)
+(setq-default cursor-type '(bar . 3)) ; set cursor to bar
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; set tripple wheel gestures to cycle buffers
@@ -491,40 +486,23 @@
 	 ("C-c x x" . execute-extended-command)
 	 ("C-c s u" . smex-show-unbound-commands))) ; old M-X
 
-
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; File headers with header2
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
- 
+
 (use-package header2
   :ensure t
   :functions header-prefix-string
   :config (progn
-	    (defun make-box-comment-region-sb (&optional end-col start end)
-	      "Wrap active region in a box comment, or make an empty box comment.
-	       The maxium width is `fill-column', by default.  With a numeric prefix
-	       arg, use that as the maximum width, except use at least 2 + the length
-	       returned by function `header-prefix-string'."
-	      (interactive "P\nr")
-	      (setq end-col  (if end-col (prefix-numeric-value end-col) fill-column))
-	      (if (not (and mark-active	 (mark)	 (> (region-end) (region-beginning))))
-		  (make-box-comment end-col)
-		(let ((selection  (buffer-substring start end)))
-		  (kill-region start end) 
-		  (make-box-comment end-col)
-		  (insert (replace-regexp-in-string
-                           "\n" (concat "\n" (header-prefix-string))
-                           (replace-regexp-in-string
-                            (concat "^[ \t]*[" (nonempty-comment-start) "]*")
-                            "" selection))))))
-	    
+
+	    (setq make-box-comment-region-replace-prefix-flag t)
 	    (add-hook 'emacs-lisp-mode-hook 'auto-make-header)
 	    (add-hook 'c-mode-common-hook   'auto-make-header)
 	    (add-hook 'haskell-mode-hook    'auto-make-header)		 
 	    (add-hook 'write-file-hooks 'auto-update-file-header))  
   :bind (("C-h C-h" . make-header)
 	 ("C-h C-r" . make-revision)
-	 ("C-h C-b" . make-box-comment-region-sb)))
+	 ("C-h C-b" . make-box-comment-region)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General text editing stuff
