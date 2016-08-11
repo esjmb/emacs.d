@@ -6,10 +6,10 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Thu Aug 11 11:57:59 2016 (+0100)
+;; Last-Updated: Thu Aug 11 15:36:32 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 952
-;; Keywords: emacs config
+;;     Update #: 953
+;; Keywords: emacs config 
 ;; Compatibility: GNU Emacs: 25.x
 ;;  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
