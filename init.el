@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Thu Aug 11 15:43:46 2016 (+0100)
+;; Last-Updated: Fri Sep 30 15:55:57 2016 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 954
+;;     Update #: 1004
 ;; Keywords: emacs config 
 ;; Compatibility: GNU Emacs: 25.x
 ;;  
@@ -59,7 +59,20 @@
     (package-refresh-contents)
   (package-install 'use-package))
   (eval-when-compile (require 'use-package))
-  (use-package diminish :ensure t)
+  
+  (use-package diminish
+    :ensure t
+    :functions rename-modeline
+    :config (progn
+	      (defmacro rename-modeline (package-name mode new-name)
+		`(eval-after-load ,package-name
+		   '(defadvice ,mode (after rename-modeline activate)
+		      (setq mode-name ,new-name))))
+
+	      (rename-modeline "js2-mode" js2-mode "JS2")
+	      (rename-modeline "clojure-mode" clojure-mode "Clj")
+	      (rename-modeline "emacs-lisp-mode" emacs-lisp-mode "ELISP")))
+  
   (use-package bind-key :ensure t)
   (use-package package-utils
     :ensure t
@@ -147,19 +160,46 @@
     (indent-for-tab-command)))   ; ELSE IF no active region, use indenting tab
 (global-set-key (kbd "TAB") 'my/tab-replacement)
 
+;; rotate windows
+(defun rotate-windows ()
+  "Rotate your windows"
+  (interactive)
+  (cond ((not (> (count-windows)1))
+         (message "You can't rotate a single window!"))
+        ((let* (( i 1)
+		(numWindows (count-windows)))
+	   (while  (< i numWindows)
+	     (let* (
+		    (w1 (elt (window-list) i))
+		    (w2 (elt (window-list) (+ (% i numWindows) 1)))
+
+		    (b1 (window-buffer w1))
+		    (b2 (window-buffer w2))
+
+		    (s1 (window-start w1))
+		    (s2 (window-start w2)))                  
+	       (set-window-buffer w1  b2)
+	       (set-window-buffer w2 b1)
+	       (set-window-start w1 s2)
+	       (set-window-start w2 s1)
+	       (setq i (1+ i))))))))
+
 ;; key bindings for window manipulation
+(global-set-key (kbd "A-r") 'rotate-windows)
 (global-set-key (kbd "M-1") 'delete-other-windows)
 (global-set-key (kbd "A-(") 'delete-other-windows)
 (global-set-key (kbd "M-(") 'delete-other-windows) ; for progrmmers keyboard
 (global-set-key (kbd "M-2") 'split-window-below)
+(global-set-key (kbd "A-2") 'split-window-below)
 (global-set-key (kbd "A-)") 'split-window-below)
 (global-set-key (kbd "M-)") 'split-window-below) ; for progrmmers keyboard
+(global-set-key (kbd "A-3") 'split-window-right)
 (global-set-key (kbd "M-3") 'split-window-right)
 (global-set-key (kbd "A-}") 'split-window-right) 
 (global-set-key (kbd "M-}") 'split-window-right) ; for progrmmers keyboard
 (global-set-key (kbd "M-o") 'other-window)
 (global-set-key (kbd "A-o") 'other-window)
-
+(global-set-key (kbd "A-d") 'delete-window)
 ;; buffers
 (global-set-key (kbd "A-p") 'previous-buffer)
 (global-set-key (kbd "A-n") 'next-buffer)
@@ -203,7 +243,11 @@
     ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
  '(package-selected-packages
    (quote
-    (osx-clipboard ghc-imported-from fill-column-indicator smooth-scroll smooth-scrolling centered-cursor-mode flycheck magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode intero))))
+    (php-ext php-mode company-quickhelp dash git-commit intero with-editor yaml-mode osx-clipboard ghc-imported-from fill-column-indicator smooth-scroll smooth-scrolling centered-cursor-mode flycheck magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode)))
+ '(safe-local-variable-values
+   (quote
+    ((haskell-process-use-ghci . t)
+     (haskell-indent-spaces . 4)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -464,6 +508,26 @@
     :ensure t
     :bind (("C-c r f" . reveal-in-osx-finder))))
 
+;; Auto refresh buffers
+(global-auto-revert-mode 1)
+
+;; Also auto refresh dired, but be quiet about it
+(setq global-auto-revert-non-file-buffers t)
+(setq auto-revert-verbose nil)
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Prompt and message stuff stuff
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(fset 'yes-or-no-p 'y-or-n-p) ; y or n prompt only
+(setq confirm-nonexistent-file-or-buffer nil)  ; if it ain't there, create it
+(setq kill-buffer-query-functions              ; me no care about live processes
+      (remq 'process-kill-buffer-query-function
+            kill-buffer-query-functions))
+
+(eval-after-load "startup"                                  ; don't offer me help
+  '(fset 'display-startup-echo-area-message (lambda ())))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Shell stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -509,6 +573,12 @@
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (delete-selection-mode 1) ; overwrite selected text
+
+(use-package saveplace  ;; Save point position between sessions
+  :ensure t 
+  :config (progn
+            (save-place-mode 1)
+            (setq save-place-file (expand-file-name ".places" user-emacs-directory))))
 
 (use-package linum			       ; line numbering globally
 	     :ensure t
@@ -671,7 +741,98 @@ It is sensitive to language-dependent comment conventions."
 
 (global-set-key (kbd "M-;") 'comment-eclipse)
 (global-set-key (kbd "A-;") 'comment-eclipse)
- 
+
+;; move around faster
+(global-set-key (kbd "C-M-n")
+                (lambda ()
+                  (interactive)
+                  (ignore-errors (forward-line 5))))
+
+(global-set-key (kbd "C-M-p")
+                (lambda ()
+                  (interactive)
+                  (ignore-errors (forward-line -5))))
+
+(global-set-key (kbd "C-M-f")
+                (lambda ()
+                  (interactive)
+                  (ignore-errors (forward-char 5))))
+
+(global-set-key (kbd "C-M-b")
+                (lambda ()
+                  (interactive)
+                  (ignore-errors (backward-char 5))))
+
+
+;; create line above or below
+(defun open-line-below ()
+  (interactive)
+  (end-of-line)
+  (newline)
+  (indent-for-tab-command))
+
+(defun open-line-above ()
+  (interactive)
+  (beginning-of-line)
+  (newline)
+  (forward-line -1)
+  (indent-for-tab-command))
+
+(global-set-key (kbd "<C-return>") 'open-line-below)
+(global-set-key (kbd "<C-S-return>") 'open-line-above)
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; shell
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun comint-delchar-or-eof-or-kill-buffer (arg)
+  (interactive "p")
+  (if (null (get-buffer-process (current-buffer)))
+      (kill-buffer-and-window)
+    (comint-delchar-or-maybe-eof arg)))
+
+(add-hook 'shell-mode-hook
+          (lambda ()
+            (define-key shell-mode-map
+              (kbd "C-d") 'comint-delchar-or-eof-or-kill-buffer)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Buffer manipulation
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun delete-current-buffer-file ()
+  "Removes file connected to current buffer and kills buffer."
+  (interactive)
+  (let ((filename (buffer-file-name))
+        (buffer (current-buffer))
+        (name (buffer-name)))
+    (if (not (and filename (file-exists-p filename)))
+        (ido-kill-buffer)
+      (when (yes-or-no-p "Are you sure you want to remove this file? ")
+        (delete-file filename)
+        (kill-buffer buffer)
+        (message "File '%s' successfully removed" filename)))))
+
+(global-set-key (kbd "C-x C-k") 'delete-current-buffer-file)
+
+(defun rename-current-buffer-file ()
+  "Renames current buffer and file it is visiting."
+  (interactive)
+  (let ((name (buffer-name))
+        (filename (buffer-file-name)))
+    (if (not (and filename (file-exists-p filename)))
+        (error "Buffer '%s' is not visiting a file!" name)
+      (let ((new-name (read-file-name "New name: " filename)))
+        (if (get-buffer new-name)
+            (error "A buffer named '%s' already exists!" new-name)
+          (rename-file filename new-name 1)
+          (rename-buffer new-name)
+          (set-visited-file-name new-name)
+          (set-buffer-modified-p nil)
+          (message "File '%s' successfully renamed to '%s'"
+                   name (file-name-nondirectory new-name)))))))
+
+(global-set-key (kbd "C-x C-r") 'rename-current-buffer-file)
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; font selection
 ;; ordered for clarity of symbols for haskell programming. the list of
@@ -783,7 +944,7 @@ It is sensitive to language-dependent comment conventions."
 	(haskell-sort-imports)
 	(haskell-align-imports)))
 
-    ;; load up interp
+    ;; load up intero
     (use-package intero
       :ensure t
       :config (progn 
@@ -827,7 +988,22 @@ It is sensitive to language-dependent comment conventions."
 		    ("C-c v p" . magit-pull))
 	     :config
 	     (progn
-	       (setq magit-save-repository-buffers 'dontask)))
+	       (setq magit-save-repository-buffers 'dontask)
+               ;; full screen magit-status
+               ;; This code makes magit-status run alone in the frame, and then restores the old window
+               ;; configuration when you quit out of magit.
+               (defadvice magit-status (around magit-fullscreen activate)
+                 (window-configuration-to-register :magit-fullscreen)
+                 ad-do-it
+                 (delete-other-windows))
+
+               (defun magit-quit-session ()
+                 "Restores the previous window configuration and kills the magit buffer"
+                 (interactive)
+                 (kill-buffer)
+                 (jump-to-register :magit-fullscreen))
+
+               (define-key magit-status-mode-map (kbd "q") 'magit-quit-session)))
 
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -842,6 +1018,18 @@ It is sensitive to language-dependent comment conventions."
             (auto-compile-on-save-mode)))
 
 (use-package lisp-mode :bind (("C-c C-c" . eval-buffer)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; php stuff
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package php-mode
+  :ensure t)
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; yaml mode
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package yaml-mode :ensure t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; init.el ends here
