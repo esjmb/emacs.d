@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Sat Jul 29 19:07:22 2017 (+0100)
+;; Last-Updated: Sat Jul 29 20:11:27 2017 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 1329
+;;     Update #: 1338
 ;; Keywords: emacs config 
 ;; Compatibility: GNU Emacs: 25.x
 ;;  
@@ -844,7 +844,15 @@
     (unless (null fonts)
       (progn
 	(set-face-attribute 'default nil :font (car fonts))
-	(set-face-attribute 'default nil :weight 'light)))))
+	(set-face-attribute 'default nil :weight 'light)
+
+        ;; If we have Hasklig font as default, which supports ligatures for haskell symbols,
+        ;; then don't haskel-font-lock-symbols as Hasklig does a better job visually.
+        (if (string-match "Hasklig" (car fonts))
+            (progn
+              (setq haskell-font-lock-symbols nil)
+              (setq mac-auto-operator-composition-mode t)) ;; enable ligatures	  
+          (setq haskell-font-lock-symbols 'unicode))))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Haskell Stuff
@@ -914,27 +922,18 @@ forwards, if negative)."
 
 (use-package haskell-mode
   :ensure t 
-
   :defines haskell-mode-map
   :functions haskell-complete-module-read 
   :bind* ( :map haskell-mode-map
-	       ("H-i" . haskell-fast-add-import) ; interactive import
+	       ("A-i" . haskell-fast-add-import) ; interactive import
 	       ("C-r" . haskell-move-right)	 ; nested right indent
 	       ("C-l" . haskell-move-left)	 ; nested left indent
                ("C-c C-b" . haskell-compile)
                ("C-`" . my-next-error-wrapped)
 	       ("M-`" . my-previous-error-wrapped))
   :config
-  (progn
-    ;; If we have Hasklig font as default, which supports ligatures for haskell symbols,
-    ;; then don't haskel-font-lock-symbols as Hasklig does a better job visually.
-    (if (string-match-p (regexp-quote "Hasklig")
-			(aref (query-font (face-attribute 'default :font)) 0))
-	(progn
-	  (setq haskell-font-lock-symbols nil)
-	  (setq mac-auto-operator-composition-mode t)) ;; enable ligatures
-	  
-      (setq haskell-font-lock-symbols 'unicode))
+  (progn                        
+    
 
     
     (setq haskell-compile-cabal-build-command "stack build")
@@ -1035,6 +1034,7 @@ forwards, if negative)."
 
 (use-package shakespeare-mode
   :ensure t)
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Documentation Browsers 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
