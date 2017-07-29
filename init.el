@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Fri Sep 30 15:55:57 2016 (+0100)
+;; Last-Updated: Sat Jul 29 18:56:39 2017 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 1004
+;;     Update #: 1325
 ;; Keywords: emacs config 
 ;; Compatibility: GNU Emacs: 25.x
 ;;  
@@ -42,106 +42,135 @@
 (if (version< emacs-version "23.3")
     (error "Init file only supports > 23.3 Aborting load. Try installing a newer version of emacs"))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Add MELPA to package archives.  Also set up use-package so that I
-;; can use it to manage subsequent package loads.
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(when (>= emacs-major-version 24)
-  (require 'package)
-  (add-to-list
-   'package-archives
-   '("melpa" . "http://melpa.org/packages/") t)
-  (package-initialize)
-  (unless package-archive-contents ; fetch the list of packages available 
-    (package-refresh-contents))
-  (unless (package-installed-p 'use-package) ; integrate use-package
-    (package-refresh-contents)
-  (package-install 'use-package))
-  (eval-when-compile (require 'use-package))
-  
-  (use-package diminish
-    :ensure t
-    :functions rename-modeline
-    :config (progn
-	      (defmacro rename-modeline (package-name mode new-name)
-		`(eval-after-load ,package-name
-		   '(defadvice ,mode (after rename-modeline activate)
-		      (setq mode-name ,new-name))))
-
-	      (rename-modeline "js2-mode" js2-mode "JS2")
-	      (rename-modeline "clojure-mode" clojure-mode "Clj")
-	      (rename-modeline "emacs-lisp-mode" emacs-lisp-mode "ELISP")))
-  
-  (use-package bind-key :ensure t)
-  (use-package package-utils
-    :ensure t
-    :config (progn
-	      (defun package-upgrade-all () ; easier to remember than M-x -upg
-		(interactive)
-		(package-utils-upgrade-all)))))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; some basic gui settings
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-(if window-system 
-    (progn 
-      (tool-bar-mode -1)              ; no toolbar 
-      (menu-bar-mode -1)))             ; no menu
-
-(when (memq window-system '(mac ns))  ; fix mac mouse scrolling
-  (setq mouse-wheel-scroll-amount '(1 ((shift) . 6) ((control) . nil)) ;
-        mouse-wheel-progressive-speed nil
-        scroll-error-top-bottom t
-        scroll-preserve-screen-position nil
-        scroll-margin 10                  
-        scroll-conservatively 100000))
-
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Kill startup message etc.
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq inhibit-startup-message t)      ; hide welcome screne
 (setq ring-bell-function 'ignore)     ; inhibit bell - it's annoying
 (setq echo-keystrokes 0.01)           ; immediate echo
 (global-hl-line-mode t)               ; highlight the current line
 (blink-cursor-mode 0)                 ; stop blinking cursor
-(setq custom-safe-themes t)
+(setq custom-safe-themes t) 
 (load-theme 'tango-dark)
 (setq-default cursor-type '(bar . 3)) ; set cursor to bar
+(tool-bar-mode -1)              ; no toolbar 
+(menu-bar-mode -1)             ; no menu
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; set tripple wheel gestures to cycle buffers
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Add MELPA to package archives.  Also set up use-package so that I
+;; can use it to manage subsequent package loads.
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defvar *my-previous-buffer* t
-  "can we switch?")
+(require 'package)
+(add-to-list
+ 'package-archives
+ '("melpa" . "http://melpa.org/packages/") t)
+(package-initialize)
+(unless package-archive-contents ; fetch the list of packages available 
+  (package-refresh-contents))
+(unless (package-installed-p 'use-package) ; integrate use-package
+  (package-refresh-contents)
+  (package-install 'use-package))
+(eval-when-compile (require 'use-package))
 
-(defun my-previous-buffer ()
-  (interactive)
-  ;(message "custom prev: *my-previous-buffer*=%s" *my-previous-buffer*)
-  (when *my-previous-buffer*
-    (previous-buffer)
-    (setq *my-previous-buffer* nil)
-    (run-at-time "1 sec" nil (lambda ()
-                               (setq *my-previous-buffer* t)))))
+(use-package diminish
+  :ensure t     
+  :functions rename-modeline
+  :config (progn
+            (defmacro rename-modeline (package-name mode new-name)
+              `(eval-after-load ,package-name
+                 '(defadvice ,mode (after rename-modeline activate)
+                    (setq mode-name ,new-name))))
 
-(defvar *my-next-buffer* t
-  "can we switch?")
+            (rename-modeline "js2-mode" js2-mode "JS2")
+            (rename-modeline "clojure-mode" clojure-mode "Clj")
+            (rename-modeline "emacs-lisp-mode" emacs-lisp-mode "ELISP")))
 
-(defun my-next-buffer ()
-  (interactive)
-  ;(message "custom prev: *my-next-buffer*=%s" *my-next-buffer*)
-  (when *my-next-buffer*
-    (next-buffer)
-    (setq *my-next-buffer* nil)
-    (run-at-time "1 sec" nil (lambda ()
-                               (setq *my-next-buffer* t)))))
+(use-package bind-key :ensure t)
+(use-package package-utils
+  :ensure t
+  ;;    :functions package-speak-upgrades
+  :config (progn
+            (defun package-upgrade-all () ; easier to remember than M-x -upg
+              (interactive)
+              (package-utils-upgrade-all))
+            ))
 
-(global-set-key [triple-wheel-right] 'my-previous-buffer)
-(global-set-key [triple-wheel-left] 'my-next-buffer)
-(global-set-key [double-wheel-right] 'ignore)
-(global-set-key [wheel-left] 'ignore)
-(global-set-key [wheel-right] 'ignore)
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; some basic gui settings
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; force tooltip content to echo area
+(tooltip-mode -1)
+
+;; for neotree mode
+(use-package all-the-icons :ensure t)
+(use-package all-the-icons-dired :ensure t)
+
+(use-package neotree
+  :ensure t
+  :config (progn
+	    (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+            (setq neo-smart-open t))
+  :bind ("A-t" . neotree-toggle))
+
+;; no fringes on windows
+(set-fringe-mode 0)
+
+;; Don't display warnings below error level
+(setq warning-minimum-level :error)
+
+(set-default 'truncate-lines t) ; don't let lines wrap
+
+(mac-auto-operator-composition-mode) ;; use ligatures for haskell hasklig display etc. 
+
+(use-package mode-icons ; Show icons instead of mode names 
+  :ensure t
+  :config (mode-icons-mode))
+
+;; set frame title
+(setq frame-title-format
+      '("" invocation-name ": "(:eval (if (buffer-file-name)
+					  (abbreviate-file-name (buffer-file-name))
+					"%b"))))
+
+(setq column-number-mode t)           ; display cursor position in mode-line
+(set-face-background 'scroll-bar "grey")
+
+;; increase the size of the minibuffer
+(add-hook 'minibuffer-setup-hook 'my-minibuffer-setup)
+(defun my-minibuffer-setup ()
+  (set (make-local-variable 'face-remapping-alist)
+       '((default :height 1.5))))
+
+
+(global-set-key (kbd "<M-left>")  'windmove-left)
+(global-set-key (kbd "<M-right>") 'windmove-right)
+(global-set-key (kbd "<M-up>")    'windmove-up)
+(global-set-key (kbd "<M-down>")  'windmove-down)
+
+(use-package auto-dim-other-buffers
+  :ensure t
+  :config (progn
+	    (add-hook 'after-init-hook (lambda ()
+				       (when (fboundp 'auto-dim-other-buffers-mode)
+					 (auto-dim-other-buffers-mode t)))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Mode line
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package smart-mode-line
+  :ensure t
+  :config (progn
+            (setq sml/theme 'dark)
+            (sml/setup)))
+
+(use-package spaceline       ;; nice mode line
+  :ensure t
+  :config (progn
+	    (require 'spaceline-config)
+	    (spaceline-emacs-theme)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global key bindings
@@ -151,41 +180,10 @@
   (progn   ; unbind C-i from tab for later remapping
     (define-key input-decode-map (kbd "C-i") (kbd "H-i"))))  
 
-;; rebind tab key to indent region if active, or default tab
-;; behaviour otherwise.
-(defun my/tab-replacement (&optional START END)
-  (interactive "r")
-  (if (use-region-p)                                        
-      (indent-region START END)  ; IF active region, use indent-region                                       
-    (indent-for-tab-command)))   ; ELSE IF no active region, use indenting tab
-(global-set-key (kbd "TAB") 'my/tab-replacement)
-
-;; rotate windows
-(defun rotate-windows ()
-  "Rotate your windows"
-  (interactive)
-  (cond ((not (> (count-windows)1))
-         (message "You can't rotate a single window!"))
-        ((let* (( i 1)
-		(numWindows (count-windows)))
-	   (while  (< i numWindows)
-	     (let* (
-		    (w1 (elt (window-list) i))
-		    (w2 (elt (window-list) (+ (% i numWindows) 1)))
-
-		    (b1 (window-buffer w1))
-		    (b2 (window-buffer w2))
-
-		    (s1 (window-start w1))
-		    (s2 (window-start w2)))                  
-	       (set-window-buffer w1  b2)
-	       (set-window-buffer w2 b1)
-	       (set-window-start w1 s2)
-	       (set-window-start w2 s1)
-	       (setq i (1+ i))))))))
+;; Allow hash to be entered  as M-3
+(global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
 
 ;; key bindings for window manipulation
-(global-set-key (kbd "A-r") 'rotate-windows)
 (global-set-key (kbd "M-1") 'delete-other-windows)
 (global-set-key (kbd "A-(") 'delete-other-windows)
 (global-set-key (kbd "M-(") 'delete-other-windows) ; for progrmmers keyboard
@@ -194,7 +192,7 @@
 (global-set-key (kbd "A-)") 'split-window-below)
 (global-set-key (kbd "M-)") 'split-window-below) ; for progrmmers keyboard
 (global-set-key (kbd "A-3") 'split-window-right)
-(global-set-key (kbd "M-3") 'split-window-right)
+;;(global-set-key (kbd "M-3") 'split-window-right)
 (global-set-key (kbd "A-}") 'split-window-right) 
 (global-set-key (kbd "M-}") 'split-window-right) ; for progrmmers keyboard
 (global-set-key (kbd "M-o") 'other-window)
@@ -203,12 +201,18 @@
 ;; buffers
 (global-set-key (kbd "A-p") 'previous-buffer)
 (global-set-key (kbd "A-n") 'next-buffer)
-
+;; widen and shrink buffer
+(global-set-key (kbd "A-]") 'enlarge-window-horizontally)
+(global-set-key (kbd "A-[") 'shrink-window-horizontally)
 ;; set M-n and M-p to next and previous lines
-(global-set-key (kbd "M-n") 'next-line)
-(global-set-key (kbd "M-p") 'previous-line)
 (global-set-key (kbd "RET") 'reindent-then-newline-and-indent) ; indent present line then to next
 
+;; change text size
+(global-set-key (kbd "A-=") 'text-scale-increase)
+(global-set-key (kbd "A--") 'text-scale-decrease)
+
+;; recentre to current line
+(global-set-key (kbd "A-l") 'recenter)
 ;; mac specific key bindings
 (when (eq system-type 'darwin) ;; mac specific settings
   (setq mac-option-modifier 'meta)
@@ -240,10 +244,11 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    (quote
-    ("3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
+    ("10e231624707d46f7b2059cc9280c332f7c7a530ebc17dba7e506df34c5332c4" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
+ '(line-number-mode nil)
  '(package-selected-packages
    (quote
-    (php-ext php-mode company-quickhelp dash git-commit intero with-editor yaml-mode osx-clipboard ghc-imported-from fill-column-indicator smooth-scroll smooth-scrolling centered-cursor-mode flycheck magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode)))
+    (auto-dim-other-buffers shakespeare-mode git-gutter diff-hl diff-hl-mode aggressive-indent highlight-symbol all-the-icons-dired neotree gruvbox-theme popwin hightlight-symbol light-symbol-mode light-symbol fic-mode use-package-chords mode-icons spaceline spaceline-config markdown-mode idomenu ace-jump-mode multiple-cursors restclient restclient-mode company-dabbrev-code company-ghc commpany-ghc package-utils async php-ext php-mode company-quickhelp dash git-commit intero with-editor yaml-mode osx-clipboard ghc-imported-from fill-column-indicator centered-cursor-mode magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode)))
  '(safe-local-variable-values
    (quote
     ((haskell-process-use-ghci . t)
@@ -265,17 +270,17 @@
  '(highlight ((t (:background "grey10" :foreground nil)))))
 
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Mode line
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package smart-mode-line
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; highlight-symbol
+;; This mode highlights all occurences of the presently highlighted symbol
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package highlight-symbol
   :ensure t
   :config (progn
-            (setq sml/theme 'dark)
-            (sml/setup)))
-
-(setq column-number-mode t)           ; display cursor position in mode-line
+	    (setq highlight-symbol-idle-delay 0.3)
+            (set-face-attribute 'highlight-symbol-face nil
+                                :background "firebrick4"))
+  :init (add-hook 'prog-mode-hook 'highlight-symbol-mode))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Last Command
@@ -290,117 +295,117 @@
 
 (use-package cl :ensure t)
 
-(defvar display-new-message-sb "")
-(defun notify-modeline-form-sb ()
-  display-new-message-sb)
+;; (defvar display-new-message-sb "")
+;; (defun notify-modeline-form-sb ()
+;;   display-new-message-sb)
 
-(if (featurep 'xemacs)
-    (unless (member 'display-new-messages global-mode-string)
-      (if (null global-mode-string)
-          (setq global-mode-string '("" display-new-messages))
-        (setq global-mode-string
-              (append global-mode-string
-                      '(display-new-messages)))))
-  (unless (member '(:eval (notify-modeline-form-sb)) global-mode-string)
-    (setq global-mode-string
-          (append global-mode-string
-                  (list '(:eval (notify-modeline-form-sb)))))))
+;; (if (featurep 'xemacs)
+;;     (unless (member 'display-new-messages global-mode-string)
+;;       (if (null global-mode-string)
+;;           (setq global-mode-string '("" display-new-messages))
+;;         (setq global-mode-string
+;;               (append global-mode-string
+;;                       '(display-new-messages)))))
+;;   (unless (member '(:eval (notify-modeline-form-sb)) global-mode-string)
+;;     (setq global-mode-string
+;;           (append global-mode-string
+;;                   (list '(:eval (notify-modeline-form-sb)))))))
 
-(defun execute-extended-command-shorter-sb-1 (name length end-time)
-       (cond
-     ;((not (time-less-p (current-time) end-time)) nil)
-     ((zerop length) (list ""))
-     ((equal name "") nil)
-     (t
-      (nconc (mapcar (lambda (s) (concat (substring name 0 1) s))
-                     (execute-extended-command-shorter-sb-1
-                      (substring name 1) (1- length) end-time))
-             (when (string-match "\\`\\(-\\)?[^-]*" name)
-               (execute-extended-command-shorter-sb-1
-                (substring name (match-end 0)) length end-time))))))
+;; (defun execute-extended-command-shorter-sb-1 (name length end-time)
+;;        (cond
+;;      ;((not (time-less-p (current-time) end-time)) nil)
+;;      ((zerop length) (list ""))
+;;      ((equal name "") nil)
+;;      (t
+;;       (nconc (mapcar (lambda (s) (concat (substring name 0 1) s))
+;;                      (execute-extended-command-shorter-sb-1
+;;                       (substring name 1) (1- length) end-time))
+;;              (when (string-match "\\`\\(-\\)?[^-]*" name)
+;;                (execute-extended-command-shorter-sb-1
+;;                 (substring name (match-end 0)) length end-time))))))
 
-(defun execute-extended-command-shorter-sb (name)
-  (let ((candidates '())
-        (max (length name))
-        (len 1)
-        binding
-        (end-time (time-add (current-time) (seconds-to-time 1))))
-    (while (and (not binding)
-                (time-less-p (current-time) end-time) ; timeout fail
-                (progn
-                  (unless candidates
-                    (setq len (1+ len))
-                    (setq candidates (execute-extended-command-shorter-sb-1
-                                      name len end-time)))
-                  ;; Don't show the help message if the binding isn't
-                  ;; significantly shorter than the M-x command the user typed.
-                  (< len (- max 5))))
-      (let ((candidate (pop candidates)))
-        (when (equal name
-                       (car-safe (completion-try-completion
-                                  candidate obarray 'commandp len)))
-          (setq binding candidate))))
-    binding))
+;; (defun execute-extended-command-shorter-sb (name)
+;;   (let ((candidates '())
+;;         (max (length name))
+;;         (len 1)
+;;         binding
+;;         (end-time (time-add (current-time) (seconds-to-time 1))))
+;;     (while (and (not binding)
+;;                 (time-less-p (current-time) end-time) ; timeout fail
+;;                 (progn
+;;                   (unless candidates
+;;                     (setq len (1+ len))
+;;                     (setq candidates (execute-extended-command-shorter-sb-1
+;;                                       name len end-time)))
+;;                   ;; Don't show the help message if the binding isn't
+;;                   ;; significantly shorter than the M-x command the user typed.
+;;                   (< len (- max 5))))
+;;       (let ((candidate (pop candidates)))
+;;         (when (equal name
+;;                        (car-safe (completion-try-completion
+;;                                   candidate obarray 'commandp len)))
+;;           (setq binding candidate))))
+;;     binding))
 
-(defvar extended-command-hash (make-hash-table :test 'equal))
-(defun generate-extended-command--shorter-sb (name)
-  "Simple caching function to prevent recalculation of shortened command form."
-  (let ((val (gethash name extended-command-hash)))
-    (if (not val) 
-        (let ((val (execute-extended-command-shorter-sb name)))
-	  (puthash name val extended-command-hash)
-	  val)		
-      val)))
+;; (defvar extended-command-hash (make-hash-table :test 'equal))
+;; (defun generate-extended-command--shorter-sb (name)
+;;   "Simple caching function to prevent recalculation of shortened command form."
+;;   (let ((val (gethash name extended-command-hash)))
+;;     (if (not val) 
+;;         (let ((val (execute-extended-command-shorter-sb name)))
+;; 	  (puthash name val extended-command-hash)
+;; 	  val)		
+;;       val)))
 
-(defvar display-new-message-hash (make-hash-table :test 'equal))
+;; (defvar display-new-message-hash (make-hash-table :test 'equal))
 
-(defadvice call-interactively (after show-last-command activate)
-  "Shows the interactive command that was just run in the message area."
-  (unless (or (eq major-mode 'minibuffer-inactive-mode)
-	      (not (symbolp real-this-command)))
+;; (defadvice call-interactively (after show-last-command activate)
+;;   "Shows the interactive command that was just run in the message area."
+;;   (unless (or (eq major-mode 'minibuffer-inactive-mode)
+;; 	      (not (symbolp real-this-command)))
 
-    (let* ((tc (symbol-name real-this-command))	 ; don't use 'this-command' !
-	   (val (gethash tc display-new-message-hash))) ; cache previous string generations
-      (if (bound-and-true-p val)
-	  (setq display-new-message-sb val)
-	;; TODO: clean up this by creating a variable that end user can add search strings to
-	(unless (or (string= "isearch-printing-char" tc)
-		    (cl-search "mouse-" tc)	    ; do not change bar
-		    (cl-search "wheel-" tc) 
-		    (cl-search "isearch-repeat" tc)				   
-		    (cl-search "company-ignore" tc)
-		    (cl-search "company-select" tc)
-		    (cl-search "company-complete" tc)
-		    (cl-search "ignore" tc))
+;;     (let* ((tc (symbol-name real-this-command))	 ; don't use 'this-command' !
+;; 	   (val (gethash tc display-new-message-hash))) ; cache previous string generations
+;;       (if (bound-and-true-p val)
+;; 	  (setq display-new-message-sb val)
+;; 	;; TODO: clean up this by creating a variable that end user can add search strings to
+;; 	(unless (or (string= "isearch-printing-char" tc)
+;; 		    (cl-search "mouse-" tc)	    ; do not change bar
+;; 		    (cl-search "wheel-" tc) 
+;; 		    (cl-search "isearch-repeat" tc)				   
+;; 		    (cl-search "company-ignore" tc)
+;; 		    (cl-search "company-select" tc)
+;; 		    (cl-search "company-complete" tc)
+;; 		    (cl-search "ignore" tc))
 	  
-	  (if (or (<= (length tc) 4)
-		  (string= "self-insert-command" real-this-command))  ; clear if non command pressed
-	      (setq display-new-message-sb "")
-	    (when (not (string= real-this-command "nil"))
-	      (let* ((kd (key-description (this-command-keys)))
-		     (seq (lambda (x)
-			    (or (string= x kd)
-				(cl-search "<me" x)
-				(cl-search "wheel-" x))))
+;; 	  (if (or (<= (length tc) 4)
+;; 		  (string= "self-insert-command" real-this-command))  ; clear if non command pressed
+;; 	      (setq display-new-message-sb "")
+;; 	    (when (not (string= real-this-command "nil"))
+;; 	      (let* ((kd (key-description (this-command-keys)))
+;; 		     (seq (lambda (x)
+;; 			    (or (string= x kd)
+;; 				(cl-search "<me" x)
+;; 				(cl-search "wheel-" x))))
 		     
-		     (kda (mapcar 'key-description
-				  (where-is-internal real-this-command overriding-local-map nil)))
-		     (mem (member kd kda)) ;  
-		     (kdas (mapconcat 'identity (cl-remove-if seq kda) ", "))
-		     (str (format "%s%s" kdas	; append an M-x shortened version of command		 
-				  (if (not mem) 
-				      (let ((s (generate-extended-command--shorter-sb tc)))
-					(if (or (string= "" s)(string= "nil" s)) ""
-					  (format ", M-x %s" s)))
-				    "")))
-		     (dstr  (format "%s%s%s  "
-				    (if mem (format "%s : " kd) "")
-				    real-this-command 
-				    (if (string= "" str) ""
-				      (format ": %s" str)))))
-		(progn
-		  (puthash tc dstr display-new-message-hash)
-		  (setq display-new-message-sb dstr ))))))))))
+;; 		     (kda (mapcar 'key-description
+;; 				  (where-is-internal real-this-command overriding-local-map nil)))
+;; 		     (mem (member kd kda)) ;  
+;; 		     (kdas (mapconcat 'identity (cl-remove-if seq kda) ", "))
+;; 		     (str (format "%s%s" kdas	; append an M-x shortened version of command		 
+;; 				  (if (not mem) 
+;; 				      (let ((s (generate-extended-command--shorter-sb tc)))
+;; 					(if (or (string= "" s)(string= "nil" s)) ""
+;; 					  (format ", M-x %s" s)))
+;; 				    "")))
+;; 		     (dstr  (format "%s%s%s  "
+;; 				    (if mem (format "%s : " kd) "")
+;; 				    real-this-command 
+;; 				    (if (string= "" str) ""
+;; 				      (format ": %s" str)))))
+;; 		(progn
+;; 		  (puthash tc dstr display-new-message-hash)
+;; 		  (setq display-new-message-sb dstr ))))))))))
 
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -412,7 +417,7 @@
 	    (setq ispell-dictionary "english")))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Company - completion mode 
+;; Company - completion mode
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package company
@@ -420,28 +425,14 @@
   :config
   (progn 
     (add-hook 'after-init-hook 'global-company-mode)
+    ;;(use-package company-ghc :ensure t)
+    
+    (add-to-list 'company-backends 'company-dabbrev-code) 
+    (add-to-list 'company-backends 'company-yasnippet)
+    (add-to-list 'company-backends 'company-files)
 
-    ;; add dabbrev to company globally alba 
-    (defun company-my-setup ()
-      (when (boundp 'company-backends)
-	;; (make-local-variable 'company-backends)
-	;; remove
-	(setq company-backends (delete 'company-dabbrev company-backends))
-	;; add
-	(add-to-list 'company-backends (list 'company-dabbrev :with 'company-files 'company-ispell))
-
-	;; (add-to-list 'company-backends 'company-ispell) 
-	;; (add-to-list 'company-backends 'company-dabbrev)
-	;; (add-to-list 'company-backends 'company-files) 
-;(setq company-ispell-dictionary (file-truename "~/.emacs.d/misc/english-words.txt"))
-	(setq company-dabbrev-other-buffers 'all)
-	(setq company-dabbrev-ignore-buffers "nil")
-	(setq company-dabbrev-downcase nil)
-	(setq company-idle-delay 0)    ; bring company up immediately
-	(setq company-tooltip-limit 20)))
-
-    (add-hook 'after-init-hook 'company-my-setup) 
-	
+    (add-hook 'haskell-mode-hook 'company-mode)
+    
     (use-package color
       :ensure t
       :functions color-lighten-name
@@ -460,7 +451,7 @@
 	   `(company-scrollbar-fg
 	     ((t (:background, (color-lighten-name bg 5)))))
 	   `(company-tooltip-selection
-	     ((t (:inherit font-lock-function-name-face))))
+	     ((t (:inherit font-lock-function-name-face :background "black"))))
 	   `(company-tooltip-common
 	     ((t (:inherit font-lock-constant-face))))))))))
 
@@ -495,7 +486,7 @@
 ;; Directories stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(setq default-directory "~/"		 ; default directory
+(setq default-directory "~/github/"		 ; default directory
       backup-directory-alist		 ; backups to single directory
 	     '(("." . "~/MyEmacsBackups"))
       delete-by-moving-to-trash t	 ; Move to trash when deleting stuff
@@ -506,10 +497,7 @@
 (when (memq window-system '(mac ns)) ; enable finder open on mac
   (use-package reveal-in-osx-finder  
     :ensure t
-    :bind (("C-c r f" . reveal-in-osx-finder))))
-
-;; Auto refresh buffers
-(global-auto-revert-mode 1)
+    :bind (("C-c C-f" . reveal-in-osx-finder))))
 
 ;; Also auto refresh dired, but be quiet about it
 (setq global-auto-revert-non-file-buffers t)
@@ -538,7 +526,6 @@
     :config (progn	      
 	      (setq exec-path-from-shell-check-startup-files nil)
 	      (exec-path-from-shell-initialize))))
-
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Smex - M-x enhancement
@@ -572,7 +559,10 @@
 ;; General text editing stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;(add-hook 'doc-view-mode-hook 'auto-revert-mode)
+
 (delete-selection-mode 1) ; overwrite selected text
+(global-set-key (kbd "M-k") '(lambda () (interactive) (kill-line 0)) ) ;M-k kills to the left
 
 (use-package saveplace  ;; Save point position between sessions
   :ensure t 
@@ -580,12 +570,12 @@
             (save-place-mode 1)
             (setq save-place-file (expand-file-name ".places" user-emacs-directory))))
 
-(use-package linum			       ; line numbering globally
-	     :ensure t
-	     :config
-	     (progn 
-	       (setq linum-format "%3d\u2502") ; pretify format
-	       (global-linum-mode 1)))
+;; (use-package linum			       ; line numbering globally
+;; 	     :ensure t
+;; 	     :config
+;; 	     (progn 
+;; 	       (setq linum-format "%3d\u2502") ; pretify format
+;; 	       (global-linum-mode 1)))
 
 (use-package highlight-parentheses   ; Parenthesis highlighting globally
   :ensure t
@@ -617,31 +607,6 @@
   :bind (("M-]" . iy-go-to-char)
 	 ("M-[" . iy-go-to-char-backward)))
 
-
-(define-globalized-minor-mode my-global-fci-mode fci-mode turn-on-fci-mode)
-(my-global-fci-mode 1)
-
-; disable fill-column-indicator if company mode is live
-(defvar-local company-fci-mode-on-p nil)
-	    
-(use-package fill-column-indicator 
-  :ensure t
-  :defines fci-rule-use-dashes
-  :config (progn   
-	    (setq fci-rule-use-dashes t)
-
-	    (defun company-turn-off-fci (&rest ignore)
-	      (when (boundp 'fci-mode)
-		(setq company-fci-mode-on-p fci-mode)
-		(when fci-mode (fci-mode -1))))
-	    
-	    (defun company-maybe-turn-on-fci (&rest ignore)
-	      (when company-fci-mode-on-p (fci-mode 1)))
-	    
-	    (add-hook 'company-completion-started-hook 'company-turn-off-fci)
-	    (add-hook 'company-completion-finished-hook 'company-maybe-turn-on-fci)
-	    (add-hook 'company-completion-cancelled-hook 'company-maybe-turn-on-fci)))
-
 ;; indent yanked text
 (dolist (command '(yank yank-pop))
   (eval `(defadvice ,command (after indent-region activate)
@@ -670,7 +635,7 @@
 (global-set-key (kbd "C-k") 'kill-and-join-forward)
 
 ;; modify A-k kills either forward whitespace or next word
-(defun kill-whitespace-or-word ()
+(defun kill-whitespace-or-word ()   
   (interactive)
   (if (looking-at "[ \t\n]")
       (let ((p (point)))
@@ -686,83 +651,93 @@
 					(kill-line 0)
 					(indent-according-to-mode)))
 
-;; toggle comment of line or region
-;; grabbed from header2.el
-(defun sb-header-prefix-string ()
-  "Return a mode-specific prefix string for use in headers.
-It is sensitive to language-dependent comment conventions."
-  (cond
-   ;; E.g. Lisp.
-   ((and comment-start (= 1 (length comment-start)))
-    (concat comment-start comment-start " "))
 
-   ;; E.g. C++ and ADA.
-   ;; Special case, three letter comment-start where the first and
-   ;; second letters are the same.
-   ((and comment-start (= 3 (length comment-start))
-         (equal (aref comment-start 1) (aref comment-start 0)))
-    comment-start)
-   
-   ;; E.g. C.
-   ;; Other three-letter comment-start -> grab the middle character
-   ((and comment-start (= 3 (length comment-start)))
-    (concat " " (list (aref comment-start 1)) " "))
 
-   ((and comment-start  (not (nonempty-comment-end)))
-
-    ;; Note: no comment end implies that the full comment-start must be
-    ;; used on each line.
-    comment-start)
-   (t ";; ")))       ; Use Lisp as default.
-
-(defun current-line-empty-p ()
-  (save-excursion
-    (beginning-of-line)
-    (looking-at "[[:space:]]*$")))
-
-(defun comment-eclipse ()
+(defun my-select-current-line ()
   (interactive)
-  (let ((start (line-beginning-position))
-        (end (line-end-position)))
-    (when (region-active-p)
-      (setq start (save-excursion
-                    (goto-char (region-beginning))
-                    (beginning-of-line)
-                    (point))
-            end (save-excursion
-                  (goto-char (region-end))
-                  (end-of-line)
-                  (point))))
-    (if (current-line-empty-p)
-        (progn
-          (insert (sb-header-prefix-string))
-          (indent-for-tab-command))
-      (comment-or-uncomment-region start end))))
+  (move-beginning-of-line nil)
+  (set-mark-command nil)
+  (move-end-of-line nil)
+  (setq deactivate-mark nil))
+
+(defun sb/select-current-region (start end)
+  (interactive)
+  (goto-char start)
+  (set-mark-command nil)
+  (goto-char end)
+  (setq deactivate-mark nil))
+
+(defun comment-eclipse ()               
+  (interactive)                         
+  (let ((start (line-beginning-position)) 
+        (end (line-end-position)))      
+    (when (region-active-p)      
+          (setq start (save-excursion   
+                        (goto-char (region-beginning)) 
+                        (beginning-of-line)
+                        (point))
+                end (save-excursion
+                      (goto-char (region-end))
+                      (end-of-line)
+                      (point))))
+    (comment-or-uncomment-region start end)))
+
 
 (global-set-key (kbd "M-;") 'comment-eclipse)
 (global-set-key (kbd "A-;") 'comment-eclipse)
+(global-set-key (kbd "C-;") 'comment-dwim)
 
 ;; move around faster
-(global-set-key (kbd "C-M-n")
-                (lambda ()
-                  (interactive)
-                  (ignore-errors (forward-line 5))))
+(defun sb/forward-line ()
+  (interactive)
+  (ignore-errors (forward-line 5)))
+  
+(global-set-key (kbd "C-M-n") 'sb/forward-line)
+(global-set-key (kbd "<A-down>") 'sb/forward-line)
 
-(global-set-key (kbd "C-M-p")
-                (lambda ()
-                  (interactive)
-                  (ignore-errors (forward-line -5))))
+(defun sb/backward-line()
+  (interactive)
+  (ignore-errors (forward-line -5)))
 
-(global-set-key (kbd "C-M-f")
-                (lambda ()
-                  (interactive)
-                  (ignore-errors (forward-char 5))))
+(global-set-key (kbd "C-M-p") 'sb/backward-line)
+(global-set-key (kbd "<A-up>") 'sb/backward-line)
 
-(global-set-key (kbd "C-M-b")
-                (lambda ()
-                  (interactive)
-                  (ignore-errors (backward-char 5))))
+(defun sb/forward-fast ()
+  (interactive)
+  (ignore-errors (forward-char 10)))
 
+(global-set-key (kbd "C-M-f") 'sb/forward-fast)
+(global-set-key (kbd "<A-right>") 'sb/forward-fast)
+
+(defun sb/backward-fast()
+  (interactive)
+  (ignore-errors (backward-char 10)))
+
+(global-set-key (kbd "C-M-b") 'sb/backward-fast)
+(global-set-key (kbd "<A-left>") 'sb/backward-fast)
+
+;; scrolling
+(when (display-graphic-p)
+  ;; Disable pixel-by-pixel scrolling, since it's extremely choppy.
+  (setq mac-mouse-wheel-smooth-scroll nil))
+;; Keyboard smooth scrolling: Prevent the awkward "snap to re-center" when
+;; the text cursor moves off-screen. Instead, only scroll the minimum amount
+;; necessary to show the new line. (A number of 101+ disables re-centering.)
+(setq scroll-conservatively 101)
+
+;; Optimize mouse wheel scrolling for smooth-scrolling trackpad use.
+;; Trackpads send a lot more scroll events than regular mouse wheels,
+;; so the scroll amount and acceleration must be tuned to smooth it out.
+(setq
+ ;; If the frame contains multiple windows, scroll the one under the cursor
+ ;; instead of the one that currently has keyboard focus.
+ mouse-wheel-follow-mouse 't
+ ;; Completely disable mouse wheel acceleration to avoid speeding away.
+ mouse-wheel-progressive-speed nil
+ ;; The most important setting of all! Make each scroll-event move 2 lines at
+ ;; a time (instead of 5 at default). Simply hold down shift to move twice as
+ ;; fast, or hold down control to move 3x as fast. Perfect for trackpads.
+ mouse-wheel-scroll-amount '(2 ((shift) . 4) ((control) . 6)))
 
 ;; create line above or below
 (defun open-line-below ()
@@ -790,6 +765,7 @@ It is sensitive to language-dependent comment conventions."
       (kill-buffer-and-window)
     (comint-delchar-or-maybe-eof arg)))
 
+(defvar  shell-mode-map)
 (add-hook 'shell-mode-hook
           (lambda ()
             (define-key shell-mode-map
@@ -827,11 +803,12 @@ It is sensitive to language-dependent comment conventions."
           (rename-file filename new-name 1)
           (rename-buffer new-name)
           (set-visited-file-name new-name)
-          (set-buffer-modified-p nil)
+          (set-buffer-modified-p nil) 
           (message "File '%s' successfully renamed to '%s'"
                    name (file-name-nondirectory new-name)))))))
 
 (global-set-key (kbd "C-x C-r") 'rename-current-buffer-file)
+(setq help-window-select t) ;; move cursor to help window so 'q' closes
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; font selection
@@ -848,37 +825,123 @@ It is sensitive to language-dependent comment conventions."
 (defun font-avail (fonts)
   "Finds the available fonts."
   (cl-remove-if-not 'font-existsp fonts))
+
 (defvar font-preferences
-  '( "Fira Code"
+  '(
+     "Hasklig"
+     ;;"Inconsolata"
+     "Source Code Pro"
+     "Fira Code"
      "PragmataPro"
-     "Inconsolata"
      "DejaVu Sans Mono"
      "Bitstream Vera Sans Mono"
      "Anonymous Pro"
-     "Menlo"
+     "Menlo"     
      "Consolas"))
+
 (unless (eq window-system nil)
   (let ((fonts (font-avail font-preferences)))
     (unless (null fonts)
-      (set-face-attribute
-       'default nil :font
-       (car fonts)))))
+      (progn
+	(set-face-attribute 'default nil :font (car fonts))
+	(set-face-attribute 'default nil :weight 'light)))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Haskell Stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; no delay on flycheck error
+(setq flycheck-display-errors-delay 0)
+(setq next-error-recenter 35)
+(setq compilation-auto-jump-to-first-error t)
+
+;; next error should scroll round to the top again
+(defun my-next-error-wrapped (&optional arg reset)
+  "Jumps to previous error if at first error jump to last error instead.
+Prefix argument ARG says how many error messages to move forwards (or
+backwards, if negative). With just C-u as prefix moves to first error"
+  (interactive "P")
+  (condition-case nil
+      (call-interactively 'next-error)
+    ('user-error (progn (next-error 1 t)))))
+
+(defun my-jump-to-last-error (buffer)
+  "Jump to last error in the BUFFER, this assumes that
+the error is at last but third line"
+  (save-selected-window
+    (select-window (get-buffer-window buffer))
+    (goto-char (point-max))
+    (forward-line -3)
+    (call-interactively 'compile-goto-error)
+    (recenter)))
+
+(defun my-previous-error-wrapped (&optional arg)
+  "Jumps to previous error if at first error jump to last error instead.
+Prefix argument ARG says how many error messages to move backwards (or
+forwards, if negative)." 
+  (interactive "P")
+  (condition-case nil
+      (if (compilation-buffer-p (current-buffer))
+          (compilation-previous-error 1)
+        (call-interactively 'previous-error))
+    ('user-error (progn
+                   (let ((error-buffer (next-error-find-buffer)))
+                     ;; If the buffer has an associated error buffer use it to
+                     ;; to move to last error
+                     (if (and (not (eq (current-buffer) error-buffer))
+                              (compilation-buffer-p error-buffer))
+                         (my-jump-to-last-error error-buffer)
+                       ;; Otherwise move to last point and invoke previous error
+                       (goto-char (point-max))
+                       (call-interactively 'previous-error)))))))
+  
+;; put a fringe indicator on the current error
+(define-fringe-bitmap 'custom-right-arrow [128 192 96 48 24 48 96 192 128] 9 8 'center)
+(put 'overlay-arrow-position 'overlay-arrow-bitmap 'custom-right-arrow)
+(defface right-triangle-face
+  '((t (:background "red" :foreground "green")))
+  "Face for `right-triangle-face`."
+  :group 'basic-faces)
+
+(set-fringe-bitmap-face 'right-triangle 'right-triangle-face)
+
+(defun bar ()
+  (with-current-buffer next-error-last-buffer
+    (unless (eq 'filled-rectangle (cdr (assq 'overlay-arrow fringe-indicator-alist)))
+      (setq fringe-indicator-alist
+            (cons '(overlay-arrow . filled-rectangle) fringe-indicator-alist)))))
+(add-hook 'next-error-hook 'bar)
+
 (use-package haskell-mode
   :ensure t 
+
   :defines haskell-mode-map
-  :functions haskell-complete-module-read
+  :functions haskell-complete-module-read 
   :bind* ( :map haskell-mode-map
 	       ("H-i" . haskell-fast-add-import) ; interactive import
 	       ("C-r" . haskell-move-right)	 ; nested right indent
-	       ("C-l" . haskell-move-left))	 ; nested left indent
+	       ("C-l" . haskell-move-left)	 ; nested left indent
+               ("C-c C-b" . haskell-compile)
+               ("C-`" . my-next-error-wrapped)
+	       ("M-`" . my-previous-error-wrapped))
   :config
   (progn
-    (setq haskell-font-lock-symbols 'unicode)
+    ;; If we have Hasklig font as default, which supports ligatures for haskell symbols,
+    ;; then don't haskel-font-lock-symbols as Hasklig does a better job visually.
+    (if (string-match-p (regexp-quote "Hasklig")
+			(aref (query-font (face-attribute 'default :font)) 0))
+	(progn
+	  (setq haskell-font-lock-symbols nil)
+	  (setq mac-auto-operator-composition-mode t)) ;; enable ligatures
+	  
+      (setq haskell-font-lock-symbols 'unicode))
+
+    
+    (setq haskell-compile-cabal-build-command "stack build")
+
+    ;; (eval-after-load "haskell-cabal"
+    ;;   '(define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-compile))
+    
     (setq haskell-stylish-on-save t)
     (define-key haskell-mode-map (kbd "<f12>") 'haskell-process-reload-devel-main)
 
@@ -944,24 +1007,36 @@ It is sensitive to language-dependent comment conventions."
 	(haskell-sort-imports)
 	(haskell-align-imports)))
 
+    
     ;; load up intero
     (use-package intero
       :ensure t
       :config (progn 
-                (add-hook 'haskell-mode-hook 'intero-mode)))))
+                (add-hook 'haskell-mode-hook 'intero-mode)
+		
+		(setq intero-blacklist '("/Users/stephen/github/devnostics-bck"
+					 "/Users/stephen/github/devnostics-dev"))
+		(add-hook 'haskell-mode-hook 'intero-mode-blacklist)))
+    (use-package flycheck
+      :ensure t
+      :config (flycheck-add-next-checker 'intero '(warning . haskell-hlint)))))
 
-;; ghc-imported-from - front end for ghc-imported-from for finding haddock documentation
-;; for symbols in
-(use-package ghc-imported-from
-  :ensure t
-  :config (progn
-            (eval-after-load 'haskell-mode
-              `(define-key haskell-mode-map
-                 (kbd "C-c C-d d")
-                 #'ghc-imported-from-haddock-for-symbol-at-point))))
+;; display TODO: comments in red
+(defun pretty-lambdas-haskell ()
+  (font-lock-add-keywords
+   nil `((,(concat "\\(" (regexp-quote "\\") "\\)")
+          (0 (progn (compose-region (match-beginning 1) (match-end 1)
+                                    ,(make-char 'greek-iso8859-7 107))
+                    nil)))))
+  
+  (font-lock-add-keywords nil '(("\\<\\(TODO\\):" 1 '(:foreground "red") t))))
 
+(add-hook 'haskell-mode-hook 'pretty-lambdas-haskell)
+
+(use-package shakespeare-mode
+  :ensure t)
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Dash API Document Browser
+;; Documentation Browsers 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package dash-at-point
@@ -973,6 +1048,83 @@ It is sensitive to language-dependent comment conventions."
                       (lambda () (setq dash-at-point-docset "lisp"))))
   :bind (("C-c d" . dash-at-point)
          ("C-c e" . dash-at-point-with-docset)))
+
+;; ghc-imported-from - front end for ghc-imported-from for finding haddock documentation
+;; for symbols in
+(use-package ghc-imported-from
+  :ensure t
+  :config (progn
+            (eval-after-load 'haskell-mode
+              `(define-key haskell-mode-map
+                 (kbd "C-c h")
+                 #'ghc-imported-from-haddock-for-symbol-at-point))))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ANSI colour etc. for compilation
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package ansi-color
+  :config (progn
+	    (defun colorize-compilation-buffer ()
+	      (let ((inhibit-read-only t))
+		(ansi-color-apply-on-region (point-min) (point-max))))
+	    (add-hook 'compilation-filter-hook 'colorize-compilation-buffer)))
+
+(setq compilation-scroll-output t)
+
+;; Some code that will make it so the background color of the lines
+;; that gcc found errors on, should be in another color.
+ 
+(use-package custom
+  :config (progn
+
+	    (defvar all-overlays ())
+	    
+	    (defun delete-this-overlay(overlay is-after begin end &optional len)
+	      (delete-overlay overlay)
+	      )
+	    (defvar current-point)
+            (defvar init/beg)
+            (defvar init/end)
+            (defvar error-line-overlay)
+	    (defun highlight-current-line()
+	      (interactive)
+	      (setq current-point (point))
+	      (beginning-of-line)
+	      (setq init/beg (point))
+	      (forward-line 1)
+	      (setq init/end (point))
+	      ;; Create and place the overlay
+	      (setq error-line-overlay (make-overlay 1 1))
+	      
+	      ;; Append to list of all overlays
+	      (setq all-overlays (cons error-line-overlay all-overlays))
+	      
+	      (overlay-put error-line-overlay
+			   'face '(background-color . "dark slate gray"))
+	      (overlay-put error-line-overlay
+			   'modification-hooks (list 'delete-this-overlay))
+	      (move-overlay error-line-overlay init/beg init/end)
+	      (goto-char current-point))
+	    
+	    (defun delete-all-overlays()
+	      (while all-overlays
+		(delete-overlay (car all-overlays))
+		(setq all-overlays (cdr all-overlays))))
+	    
+	    (defun highlight-error-lines(compilation-buffer process-result)
+	      (interactive)
+	      (delete-all-overlays)
+	      (condition-case nil
+		  (while t
+		    (next-error)
+		    (highlight-current-line)
+		    (save-excursion
+		      (compilation-next-error-function 0)
+		      (highlight-current-line))
+		    )
+		(error nil)))
+            (setq compilation-finish-functions 'highlight-error-lines)))
 
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1005,6 +1157,59 @@ It is sensitive to language-dependent comment conventions."
 
                (define-key magit-status-mode-map (kbd "q") 'magit-quit-session)))
 
+(use-package git-gutter
+  :ensure t
+  :config (global-git-gutter-mode +1))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Restclient-model
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package restclient
+  :ensure t
+  :bind (("C-9" . idomenu)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; debugging
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(global-set-key (kbd "M-g M-f") 'first-error)
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; multiple-cursors
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package multiple-cursors
+  :ensure t
+  :bind (("C-S-c C-S-c" . mc/edit-lines)
+         ("C->" . mc/mark-next-like-this)
+         ("C-<" . mc/mark-previous-like-this)
+         ("C-c C-<" . mc/mark-all-like-this)
+         ("C-S-<mouse-1>" . mc/add-cursor-on-click)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ace-jump-mode
+;; A marvelous move for quickly jumping to locations in the present view.
+;;  https://github.com/winterTTr/ace-jump-mode
+;;
+;; To use, type C-0, then type the first character of the word you want to jump to. Each
+;; instance of this the key typed in the view  is then replaced with a unique letter. Type
+;; that letter to jump the cursor to that position. The mode is cleared. Type "C-x C-SPC" to
+;; pop the cursor back to where you started.
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(use-package ace-jump-mode
+  :ensure t
+  :config (progn
+            (setq ace-jump-mode-gray-background nil)
+            (setq ace-jump-mode-case-fold t))
+  :bind (("C-0" . ace-jump-mode)))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; idomenu
+;; A menu based symbol search, depending on the current mode.
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package idomenu
+  :ensure t)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lisp Stuff
@@ -1017,13 +1222,12 @@ It is sensitive to language-dependent comment conventions."
             (auto-compile-on-load-mode)
             (auto-compile-on-save-mode)))
 
-(use-package lisp-mode :bind (("C-c C-c" . eval-buffer)))
+(use-package lisp-mode :bind (("C-c C-b" . eval-buffer)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; php stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package php-mode
-  :ensure t)
+(use-package php-mode)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; yaml mode
@@ -1031,5 +1235,24 @@ It is sensitive to language-dependent comment conventions."
 
 (use-package yaml-mode :ensure t)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; markdown mode
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
+
+;;;Handy MACROS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;  insert current date into the buffer at point  
+(defun insert-date()
+  "Insert a time-stamp according to locale's date and time format."
+  (interactive)
+  (insert (format-time-string "%c" (current-time))))   
+
+(global-set-key "\C-cd" 'insert-date)
 ;;; init.el ends here
