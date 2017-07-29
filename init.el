@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Sat Jul 29 18:56:39 2017 (+0100)
+;; Last-Updated: Sat Jul 29 19:07:22 2017 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 1325
+;;     Update #: 1329
 ;; Keywords: emacs config 
 ;; Compatibility: GNU Emacs: 25.x
 ;;  
@@ -154,7 +154,7 @@
   :config (progn
 	    (add-hook 'after-init-hook (lambda ()
 				       (when (fboundp 'auto-dim-other-buffers-mode)
-					 (auto-dim-other-buffers-mode t)))))
+					 (auto-dim-other-buffers-mode t))))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mode line
@@ -1159,7 +1159,11 @@ forwards, if negative)."
 
 (use-package git-gutter
   :ensure t
-  :config (global-git-gutter-mode +1))
+  :config (progn
+	    (global-git-gutter-mode +1)
+            ;; hide git gutter if no changes
+	    (custom-set-variables
+	     '(git-gutter:hide-gutter t))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Restclient-model
