@@ -6,9 +6,9 @@
 ;; Created: Thu Jul 14 19:00:18 2016 (+0100)
 ;; Version: 1
 ;; Package-Requires: ()
-;; Last-Updated: Sat Jul 29 20:11:27 2017 (+0100)
+;; Last-Updated: Sat Sep  2 21:50:35 2017 (+0100)
 ;;           By: Stephen Barrett
-;;     Update #: 1338
+;;     Update #: 1355
 ;; Keywords: emacs config 
 ;; Compatibility: GNU Emacs: 25.x
 ;;  
@@ -52,7 +52,8 @@
 (blink-cursor-mode 0)                 ; stop blinking cursor
 (setq custom-safe-themes t) 
 (load-theme 'tango-dark)
-(setq-default cursor-type '(bar . 3)) ; set cursor to bar
+
+(setq-default cursor-type '(bar . 4)) ; set cursor to bar
 (tool-bar-mode -1)              ; no toolbar 
 (menu-bar-mode -1)             ; no menu
 
@@ -112,7 +113,7 @@
   :config (progn
 	    (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
             (setq neo-smart-open t))
-  :bind ("A-t" . neotree-toggle))
+  :bind ("A-i" . neotree-toggle))
 
 ;; no fringes on windows
 (set-fringe-mode 0)
@@ -135,7 +136,7 @@
 					"%b"))))
 
 (setq column-number-mode t)           ; display cursor position in mode-line
-(set-face-background 'scroll-bar "grey")
+(set-face-background 'scroll-bar "black")
 
 ;; increase the size of the minibuffer
 (add-hook 'minibuffer-setup-hook 'my-minibuffer-setup)
@@ -242,13 +243,19 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ansi-color-names-vector
+   ["#212526" "#ff4b4b" "#b4fa70" "#fce94f" "#729fcf" "#e090d7" "#8cc4ff" "#eeeeec"])
+ '(company-quickhelp-color-background "dark olive green")
+ '(company-quickhelp-color-foreground "white")
+ '(company-tooltip-margin 3)
  '(custom-safe-themes
    (quote
-    ("10e231624707d46f7b2059cc9280c332f7c7a530ebc17dba7e506df34c5332c4" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
+    ("e654ce0507ae5b2d7feeaef2c07354206781527941e7feb178c0a94be4a98e90" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "0bec8e74ce41664f0e3ce76c0d2cc82804089df70164419af313483651b16bd1" "6ae174add87509daef7a844174f4f985592d70ea05c3d82377ad0a38a380ae80" "10e231624707d46f7b2059cc9280c332f7c7a530ebc17dba7e506df34c5332c4" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
+ '(git-gutter:hide-gutter t)
  '(line-number-mode nil)
  '(package-selected-packages
    (quote
-    (auto-dim-other-buffers shakespeare-mode git-gutter diff-hl diff-hl-mode aggressive-indent highlight-symbol all-the-icons-dired neotree gruvbox-theme popwin hightlight-symbol light-symbol-mode light-symbol fic-mode use-package-chords mode-icons spaceline spaceline-config markdown-mode idomenu ace-jump-mode multiple-cursors restclient restclient-mode company-dabbrev-code company-ghc commpany-ghc package-utils async php-ext php-mode company-quickhelp dash git-commit intero with-editor yaml-mode osx-clipboard ghc-imported-from fill-column-indicator centered-cursor-mode magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode)))
+    (haskell-snippets flyspell-prog-mode auto-dim-other-buffers shakespeare-mode git-gutter diff-hl diff-hl-mode aggressive-indent highlight-symbol all-the-icons-dired neotree gruvbox-theme popwin hightlight-symbol light-symbol-mode light-symbol fic-mode use-package-chords mode-icons spaceline spaceline-config markdown-mode idomenu ace-jump-mode multiple-cursors restclient restclient-mode company-dabbrev-code company-ghc commpany-ghc package-utils async php-ext php-mode company-quickhelp dash git-commit intero with-editor yaml-mode osx-clipboard ghc-imported-from fill-column-indicator centered-cursor-mode magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode)))
  '(safe-local-variable-values
    (quote
     ((haskell-process-use-ghci . t)
@@ -261,6 +268,7 @@
  '(company-scrollbar-bg ((t (:background "#454e51"))))
  '(company-scrollbar-fg ((t (:background "#394143"))))
  '(company-tooltip ((t (:inherit default :background "#454e51"))))
+ '(company-tooltip-annotation ((t (:inherit font-lock-comment-face))))
  '(company-tooltip-common ((t (:inherit font-lock-constant-face))))
  '(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
  '(font-lock-comment-face ((t (:italic t))))
@@ -269,6 +277,24 @@
  '(font-lock-warning-face ((t (:background "grey10" :foreground nil))))
  '(highlight ((t (:background "grey10" :foreground nil)))))
 
+
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; flyspell-prog-mode for comments spell checking 
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package flyspell-prog-mode :ensure t
+	     :config 
+	     (add-hook 'prog-mode-hook 'flyspell-prog-mode))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; yasnippets
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(use-package yasnippet :ensure t
+  :config (yas-global-mode 1))
+
+(use-package haskell-snippets :ensure t)
+
+(setq-default yas-prompt-functions '(yas-ido-prompt yas-dropdown-prompt))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight-symbol
@@ -416,71 +442,6 @@
   :config (progn
 	    (setq ispell-dictionary "english")))
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Company - completion mode
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package company
-  :ensure t
-  :config
-  (progn 
-    (add-hook 'after-init-hook 'global-company-mode)
-    ;;(use-package company-ghc :ensure t)
-    
-    (add-to-list 'company-backends 'company-dabbrev-code) 
-    (add-to-list 'company-backends 'company-yasnippet)
-    (add-to-list 'company-backends 'company-files)
-
-    (add-hook 'haskell-mode-hook 'company-mode)
-    
-    (use-package color
-      :ensure t
-      :functions color-lighten-name
-      :config
-      (progn 
-	(use-package company-quickhelp
-	  :ensure t
-	  :config (progn 
-		    (company-quickhelp-mode 1)))
-	(let ((bg (face-attribute 'default :background)))
-	  (custom-set-faces
-	   `(company-tooltip
-	     ((t (:inherit default :background, (color-lighten-name bg 10)))))
-	   `(company-scrollbar-bg
-	     ((t (:background, (color-lighten-name bg 10)))))
-	   `(company-scrollbar-fg
-	     ((t (:background, (color-lighten-name bg 5)))))
-	   `(company-tooltip-selection
-	     ((t (:inherit font-lock-function-name-face :background "black"))))
-	   `(company-tooltip-common
-	     ((t (:inherit font-lock-constant-face))))))))))
-
-;; php company stuff
-(defun my-php ()
-  (add-to-list 'company-backends 'company-my-php-backend))
- 
-(defvar my-php-symbol-hash "")
-(add-hook 'php-mode-hook 'my-php)
-(defun company-my-php-backend (command &optional arg &rest ignored)
-  (case command
-    (prefix (and (eq major-mode 'php-mode)
-		 (company-grab-symbol)))
-    (sorted t)
-    (candidates (all-completions
-		 arg
-		 (if (and (boundp 'my-php-symbol-hash)
-			  my-php-symbol-hash)
-		     my-php-symbol-hash
-		   
-		   (with-temp-buffer
-		     (call-process-shell-command
-		      "php -r '$all=get_defined_functions();foreach ($all[\"internal\"] as $fun) { echo $fun . \";\";};'"
-		      nil t)
-		     (goto-char (point-min))
-		     (let ((hash (make-hash-table)))
-		       (while (re-search-forward "\\([^;]+\\);" (point-max) t)
-			 (puthash (match-string 1) t hash))
-		       (setq my-php-symbol-hash hash))))))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Directories stuff
@@ -537,24 +498,6 @@
 	 ("C-c x x" . execute-extended-command)
 	 ("C-c s u" . smex-show-unbound-commands))) ; old M-X
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; File headers with header2
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(use-package header2
-  :ensure t
-  :functions header-prefix-string
-  :config (progn
-
-	    (setq make-box-comment-region-replace-prefix-flag t)
-	    (add-hook 'emacs-lisp-mode-hook 'auto-make-header)
-	    (add-hook 'c-mode-common-hook   'auto-make-header)
-	    (add-hook 'haskell-mode-hook    'auto-make-header)		 
-	    (add-hook 'write-file-hooks 'auto-update-file-header))  
-  :bind (("C-h C-h" . make-header)
-	 ("C-h C-r" . make-revision)
-	 ("C-h C-b" . make-box-comment-region)))
-
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General text editing stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -593,14 +536,7 @@
       indent-tabs-mode nil)		 ; use spaces, not <tab>
 
 (setq-default auto-fill-function 'do-auto-fill)
-(setq-default fill-column 120)		  ; we're not in the 70s
-
-(use-package expand-region		  ; structured region expansion
-  :ensure t  
-  :bind (("C-," . er/expand-region)	  ; C-, and C-. for expand/contract
-	 ("C-." . er/contract-region))
-  :config (progn			  ; delete region text on typing
-	    (delete-selection-mode 1))) 
+(setq-default fill-column 140)		  ; we're not in the 70s
 					
 (use-package iy-go-to-char		 ; see emacs rocks episode 4
   :ensure t				 ; https://github.com/doitian/iy-go-to-char
@@ -629,8 +565,7 @@
   (if (and (eolp) (not (bolp)))
       (delete-indentation t)
     (progn
-      (kill-line arg)
-      (indent-according-to-mode))))
+      (kill-line arg))))
 
 (global-set-key (kbd "C-k") 'kill-and-join-forward)
 
@@ -650,8 +585,6 @@
 					(interactive)
 					(kill-line 0)
 					(indent-according-to-mode)))
-
-
 
 (defun my-select-current-line ()
   (interactive)
@@ -858,10 +791,12 @@
 ;; Haskell Stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+
 ;; no delay on flycheck error
-(setq flycheck-display-errors-delay 0)
-(setq next-error-recenter 35)
-(setq compilation-auto-jump-to-first-error t)
+;; (setq flycheck-display-errors-delay 0)
+;; (setq next-error-recenter 35)
+;;(setq compilation-auto-jump-to-first-error t)
 
 ;; next error should scroll round to the top again
 (defun my-next-error-wrapped (&optional arg reset)
@@ -908,132 +843,121 @@ forwards, if negative)."
 (put 'overlay-arrow-position 'overlay-arrow-bitmap 'custom-right-arrow)
 (defface right-triangle-face
   '((t (:background "red" :foreground "green")))
-  "Face for `right-triangle-face`."
+  "Face for `ight-triangle-face`."
   :group 'basic-faces)
 
 (set-fringe-bitmap-face 'right-triangle 'right-triangle-face)
 
-(defun bar ()
+(defun bar () 
   (with-current-buffer next-error-last-buffer
     (unless (eq 'filled-rectangle (cdr (assq 'overlay-arrow fringe-indicator-alist)))
       (setq fringe-indicator-alist
             (cons '(overlay-arrow . filled-rectangle) fringe-indicator-alist)))))
 (add-hook 'next-error-hook 'bar)
 
+
+;; code for nice nested indent
+(defun haskell-move-right ()  
+  (interactive)
+  (haskell-move-nested 1))	
+(defun haskell-move-left ()
+  (interactive)
+  (haskell-move-nested -1))
+
 (use-package haskell-mode
-  :ensure t 
-  :defines haskell-mode-map
-  :functions haskell-complete-module-read 
+  :config (progn
+	    (setq haskell-stylish-on-save t)
+	    (setq haskell-compile-cabal-build-command "stack build")))
+
+;; load up intero
+(use-package intero
+  :ensure t
   :bind* ( :map haskell-mode-map
-	       ("A-i" . haskell-fast-add-import) ; interactive import
-	       ("C-r" . haskell-move-right)	 ; nested right indent
-	       ("C-l" . haskell-move-left)	 ; nested left indent
-               ("C-c C-b" . haskell-compile)
-               ("C-`" . my-next-error-wrapped)
-	       ("M-`" . my-previous-error-wrapped))
+                ("C-r" . haskell-move-right)	 ; nested right indent
+                ("C-l" . haskell-move-left)	 ; nested left indent
+                ("C-c C-b" . haskell-compile)
+                ("C-`" . my-next-error-wrapped)
+                ("M-`" . my-previous-error-wrapped))
   :config
-  (progn                        
+  (progn 
+    (add-hook 'haskell-mode-hook 'intero-mode)))
     
+;; (use-package flycheck
+;;   :ensure t
+;;   :config (flycheck-add-next-checker 'intero '(warning . haskell-hlint)))
 
-    
-    (setq haskell-compile-cabal-build-command "stack build")
+;; (use-package flycheck-popup-tip
+;;   :config (progn
+;;             (with-eval-after-load 'flycheck
+;;               '(add-hook 'flycheck-mode-hook 'flycheck-popup-tip-mode))))
 
-    ;; (eval-after-load "haskell-cabal"
-    ;;   '(define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-compile))
-    
-    (setq haskell-stylish-on-save t)
-    (define-key haskell-mode-map (kbd "<f12>") 'haskell-process-reload-devel-main)
-
-    ;; code for nice nested indent
-    (defun haskell-move-right ()  
-      (interactive)
-      (haskell-move-nested 1))	
-    (defun haskell-move-left ()
-      (interactive)
-      (haskell-move-nested -1))
-    
-    ;; code to add import, taken from chris done's haskell.el config
-    (defun haskell-capitalize-module (m)
-      ;; FIXME:
-      (with-temp-buffer
-	(insert m)
-	(upcase-initials-region (point-min) (point-max))
-	(buffer-string)))
-    (defvar haskell-fast-module-list
-      (list)
-      "A list of modules.")
-    (defun haskell-fast-modules-save ()
-      (interactive)
-      (with-current-buffer (find-file-noselect "~/.emacs.d/.haskell-modules.el")
-	(erase-buffer)
-	(insert (format "%S" haskell-fast-module-list))
-	(basic-save-buffer)
-	(bury-buffer)))
-    (defun haskell-fast-modules-load ()
-      (interactive)
-      (with-current-buffer (find-file-noselect "~/.emacs.d/.haskell-modules.el")
-	(setq haskell-fast-module-list (read (buffer-string)))
-	(bury-buffer)))
-    (defun haskell-fast-get-import (custom)
-      (if custom
-	  (let* ((module (haskell-capitalize-module (read-from-minibuffer "Module: " ""))))
-	    (unless (member module haskell-fast-module-list)
-	      (add-to-list 'haskell-fast-module-list module))
-	    module)
-	(let ((module (haskell-capitalize-module
-		       (haskell-complete-module-read
-			"Module: "
-			(append (mapcar #'car haskell-import-mapping)
-				haskell-fast-module-list)))))
-	  (unless (member module haskell-fast-module-list)
-	    (add-to-list 'haskell-fast-module-list module)
-	    (haskell-fast-modules-save))
-	  module)))
-    (defun haskell-fast-add-import (custom)
-      "Add an import to the import list.  Sorts and aligns imports,
-       unless `haskell-stylish-on-save' is set, in which case we defer
-       to stylish-haskell."
-      (interactive "P")
-      (save-excursion
-	(goto-char (point-max))
-	(haskell-navigate-imports)
-	(let* ((chosen (haskell-fast-get-import custom))
-	       (module (let ((mapping (assoc chosen haskell-import-mapping)))
-			 (if mapping
-			     (cdr mapping)
-			   (concat "import " chosen "\n")))))
-	  (insert module))
-	(haskell-sort-imports)
-	(haskell-align-imports)))
-
-    
-    ;; load up intero
-    (use-package intero
+(use-package company
+  :ensure t
+  :functions company-quickhelp-manual-begin
+  :config
+  (progn 
+    (add-hook 'after-init-hook 'global-company-mode)
+    ;; (add-to-list 'company-backends 'company-yasnippet)
+    ;;(add-to-list 'company-backends '(company-ghc :with company-dabbrev-code))    
+    (setq company-ghc-show-info t)
+    (add-hook 'haskell-mode-hook 'company-mode)
+    ;; (setq company-idle-delay 0)
+    (setq company-minimum-prefix-length 2)
+    ;; set up color package to pretify company tooltips etc. 
+    (use-package color
       :ensure t
-      :config (progn 
-                (add-hook 'haskell-mode-hook 'intero-mode)
-		
-		(setq intero-blacklist '("/Users/stephen/github/devnostics-bck"
-					 "/Users/stephen/github/devnostics-dev"))
-		(add-hook 'haskell-mode-hook 'intero-mode-blacklist)))
-    (use-package flycheck
-      :ensure t
-      :config (flycheck-add-next-checker 'intero '(warning . haskell-hlint)))))
+      :functions color-lighten-name
+      :config (progn
+		(let ((bg (face-attribute 'default :background)))
+		  (custom-set-faces
+		   `(company-tooltip ((t (:inherit default :background, (color-lighten-name bg 10)))))
+		   `(company-scrollbar-bg ((t (:background, (color-lighten-name bg 10)))))
+		   `(company-scrollbar-fg ((t (:background, (color-lighten-name bg 5)))))
+		   `(company-tooltip-selection ((t (:inherit font-lock-function-name-face :background "darkgreen"))))
+		   `(company-tooltip-annotation((t (:inherit font-lock-comment-face))))))))	   
+    (eval-after-load 'company
+      '(define-key company-active-map (kbd "C-c h") #'company-quickhelp-manual-begin))))
 
-;; display TODO: comments in red
+(use-package company-ghc :ensure t
+  :config (progn
+	    (add-hook 'haskell-mode-hook (lambda ()
+					   ;;(ghc-init)
+					   (add-to-list 'company-backends 'company-ghc)))
+	    (autoload 'ghc-init "ghc" nil t)
+	    (autoload 'ghc-debug "ghc" nil t)))
+	    
+(use-package company-quickhelp
+  :ensure t
+  :bind (("A-g" . company-ghc-complete-by-hoogle)
+	 ("A-m" . company-ghc-complete-in-module))
+  :config (progn 
+	    (company-quickhelp-mode 1)))
+
+;; display TODO: comments in red, do lambdas etc. 
 (defun pretty-lambdas-haskell ()
   (font-lock-add-keywords
    nil `((,(concat "\\(" (regexp-quote "\\") "\\)")
           (0 (progn (compose-region (match-beginning 1) (match-end 1)
                                     ,(make-char 'greek-iso8859-7 107))
+                    nil)))
+         ;; display liftIO or 'liftIO $' as φ
+         (,(concat "\\(" (regexp-quote "liftIO") "\\)") ;; hide liftIO and liftIO $
+          (0 (progn (compose-region (match-beginning 1) (match-end 1)
+                                    ,(make-char 'greek-iso8859-7 246))
+                    nil)))
+         (,(concat "\\(" (regexp-quote "liftIO $") "\\)")
+          (0 (progn (compose-region (match-beginning 1) (match-end 1)
+                                    ,(make-char 'greek-iso8859-7 246))
                     nil)))))
   
-  (font-lock-add-keywords nil '(("\\<\\(TODO\\):" 1 '(:foreground "red") t))))
+  (font-lock-add-keywords nil '(("\\<\\(TODO\\):" 1 '(:foreground "red") t)))
+  (font-lock-add-keywords nil '(("\\<\\(liftIO\\)" 1 '(:foreground "orange") t)))
+  (font-lock-add-keywords nil '(("\\<\\(liftIO $\\)" 1 '(:foreground "orange") t))))
 
 (add-hook 'haskell-mode-hook 'pretty-lambdas-haskell)
 
-(use-package shakespeare-mode
-  :ensure t)
+;; syntax highlighting and indentation for editing Shakespearean templates (hamlet, lucius, julius).
+(use-package shakespeare-mode :ensure t)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Documentation Browsers 
@@ -1056,8 +980,7 @@ forwards, if negative)."
   :config (progn
             (eval-after-load 'haskell-mode
               `(define-key haskell-mode-map
-                 (kbd "C-c h")
-                 #'ghc-imported-from-haddock-for-symbol-at-point))))
+                 (kbd "C-c h") #'ghc-imported-from-haddock-for-symbol-at-point))))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ANSI colour etc. for compilation
@@ -1133,22 +1056,22 @@ forwards, if negative)."
 
 (use-package magit                 ; Magit for git integration
 	     :ensure t
-	     :bind (("C-c v c" . magit-clone)
-		    ("C-c v v" . magit-status)
-		    ("C-c v g" . magit-blame)
-		    ("C-c v l" . magit-log-buffer-file)
-		    ("C-c v p" . magit-pull))
+	     :bind (("C-c m o" . magit-clone)
+		    ("C-c m s" . magit-status)
+		    ("C-c m b" . magit-blame)
+		    ("C-c m l" . magit-log-buffer-file)
+		    ("C-c m p" . magit-pull))
 	     :config
 	     (progn
 	       (setq magit-save-repository-buffers 'dontask)
-               ;; full screen magit-status
+               ;; full screen magit-status and magit-commit
                ;; This code makes magit-status run alone in the frame, and then restores the old window
                ;; configuration when you quit out of magit.
                (defadvice magit-status (around magit-fullscreen activate)
                  (window-configuration-to-register :magit-fullscreen)
                  ad-do-it
                  (delete-other-windows))
-
+	       
                (defun magit-quit-session ()
                  "Restores the previous window configuration and kills the magit buffer"
                  (interactive)
@@ -1165,18 +1088,21 @@ forwards, if negative)."
 	    (custom-set-variables
 	     '(git-gutter:hide-gutter t))))
 
+(use-package git-commit
+  :ensure nil
+  :preface
+  (defun me/git-commit-set-fill-column ()
+    (setq-local comment-auto-fill-only-comments nil)
+    (setq fill-column 72))
+  :config
+  (advice-add 'git-commit-turn-on-auto-fill :before #'me/git-commit-set-fill-column))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Restclient-model
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package restclient
   :ensure t
   :bind (("C-9" . idomenu)))
-
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; debugging
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(global-set-key (kbd "M-g M-f") 'first-error)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; multiple-cursors
@@ -1206,14 +1132,13 @@ forwards, if negative)."
   :config (progn
             (setq ace-jump-mode-gray-background nil)
             (setq ace-jump-mode-case-fold t))
-  :bind (("C-0" . ace-jump-mode)))
+  :bind (("C-j" . ace-jump-mode)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; idomenu
 ;; A menu based symbol search, depending on the current mode.
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package idomenu
-  :ensure t)
+(use-package idomenu :ensure t)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Lisp Stuff
@@ -1226,7 +1151,7 @@ forwards, if negative)."
             (auto-compile-on-load-mode)
             (auto-compile-on-save-mode)))
 
-(use-package lisp-mode :bind (("C-c C-b" . eval-buffer)))
+(use-package lisp-mode :bind (("C-0" . eval-buffer)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; php stuff
@@ -1238,7 +1163,6 @@ forwards, if negative)."
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (use-package yaml-mode :ensure t)
-
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; markdown mode
@@ -1259,4 +1183,6 @@ forwards, if negative)."
   (insert (format-time-string "%c" (current-time))))   
 
 (global-set-key "\C-cd" 'insert-date)
+
+(set-background-color "#202020")
 ;;; init.el ends here
