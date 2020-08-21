@@ -46,26 +46,30 @@
 ;; Kill startup message etc.
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (setq inhibit-startup-message t)      ; hide welcome screne
+(setq initial-scratch-message ";; Happy Hacking")
 (setq ring-bell-function 'ignore)     ; inhibit bell - it's annoying
 (setq echo-keystrokes 0.01)           ; immediate echo
 (global-hl-line-mode t)               ; highlight the current line
 (blink-cursor-mode 0)                 ; stop blinking cursor
 (setq custom-safe-themes t) 
 (load-theme 'tango-dark)
-
 (setq-default cursor-type '(bar . 4)) ; set cursor to bar
 (tool-bar-mode -1)              ; no toolbar 
 (menu-bar-mode -1)             ; no menu
+;(tooltip-mode -1) ;; force tooltip content to echo area
+(set-fringe-mode 0)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Add MELPA to package archives.  Also set up use-package so that I
 ;; can use it to manage subsequent package loads.
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(push "~/.emacs.d/elisp/" load-path)
+
 (require 'package)
-(add-to-list
- 'package-archives
- '("melpa" . "http://melpa.org/packages/") t)
+;;(add-to-list 'package-archives '("melpa" . "https://stable.melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;;(add-to-list 'package-archives '("marmalade" . "https://marmalade-repo.org/packages/") t)
 (package-initialize)
 (unless package-archive-contents ; fetch the list of packages available 
   (package-refresh-contents))
@@ -74,20 +78,8 @@
   (package-install 'use-package))
 (eval-when-compile (require 'use-package))
 
-(use-package diminish
-  :ensure t     
-  :functions rename-modeline
-  :config (progn
-            (defmacro rename-modeline (package-name mode new-name)
-              `(eval-after-load ,package-name
-                 '(defadvice ,mode (after rename-modeline activate)
-                    (setq mode-name ,new-name))))
-
-            (rename-modeline "js2-mode" js2-mode "JS2")
-            (rename-modeline "clojure-mode" clojure-mode "Clj")
-            (rename-modeline "emacs-lisp-mode" emacs-lisp-mode "ELISP")))
-
 (use-package bind-key :ensure t)
+
 (use-package package-utils
   :ensure t
   ;;    :functions package-speak-upgrades
@@ -97,34 +89,32 @@
               (package-utils-upgrade-all))
             ))
 
+;; ;;;;;;;;;;;;;;;;;;;;;;;
+;; kill processes with C-k
+;; ;;;;;;;;;;;;;;;;;;;;;;;
+(define-key process-menu-mode-map (kbd "C-k") 'joaot/delete-process-at-point)
+
+(defun joaot/delete-process-at-point ()
+  (interactive)
+  (let ((process (get-text-property (point) 'tabulated-list-id)))
+    (cond ((and process
+                (processp process))
+           (delete-process process)
+           (revert-buffer))
+          (t
+           (error "no process at point!")))))
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; some basic gui settings
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; force tooltip content to echo area
-(tooltip-mode -1)
+(setq mac-command-key-is-meta t)
 
-;; for neotree mode
-(use-package all-the-icons :ensure t)
-(use-package all-the-icons-dired :ensure t)
-
-(use-package neotree
-  :ensure t
-  :config (progn
-	    (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-            (setq neo-smart-open t))
-  :bind ("A-i" . neotree-toggle))
-
-;; no fringes on windows
-(set-fringe-mode 0)
-
-;; Don't display warnings below error level
-(setq warning-minimum-level :error)
+(setq warning-minimum-level :error) ; Don't display warnings below error level
 
 (set-default 'truncate-lines t) ; don't let lines wrap
 
-(mac-auto-operator-composition-mode) ;; use ligatures for haskell hasklig display etc. 
-
+;; icons for modes
 (use-package mode-icons ; Show icons instead of mode names 
   :ensure t
   :config (mode-icons-mode))
@@ -138,24 +128,13 @@
 (setq column-number-mode t)           ; display cursor position in mode-line
 (set-face-background 'scroll-bar "black")
 
-;; increase the size of the minibuffer
-(add-hook 'minibuffer-setup-hook 'my-minibuffer-setup)
-(defun my-minibuffer-setup ()
-  (set (make-local-variable 'face-remapping-alist)
-       '((default :height 1.5))))
-
-
-(global-set-key (kbd "<M-left>")  'windmove-left)
-(global-set-key (kbd "<M-right>") 'windmove-right)
-(global-set-key (kbd "<M-up>")    'windmove-up)
-(global-set-key (kbd "<M-down>")  'windmove-down)
-
-(use-package auto-dim-other-buffers
-  :ensure t
-  :config (progn
-	    (add-hook 'after-init-hook (lambda ()
-				       (when (fboundp 'auto-dim-other-buffers-mode)
-					 (auto-dim-other-buffers-mode t))))))
+;; navigate buffersq
+(global-set-key (kbd "ESC <left>")  'windmove-left)
+(global-set-key (kbd "M-b")  'windmove-left)
+(global-set-key (kbd "ESC <right>") 'windmove-right)
+(global-set-key (kbd "M-f") 'windmove-right)
+(global-set-key (kbd "ESC <up>")    'windmove-up)
+(global-set-key (kbd "ESC <down>")  'windmove-down)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Mode line
@@ -167,41 +146,24 @@
             (setq sml/theme 'dark)
             (sml/setup)))
 
-(use-package spaceline       ;; nice mode line
-  :ensure t
-  :config (progn
-	    (require 'spaceline-config)
-	    (spaceline-emacs-theme)))
-
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global key bindings
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 
-(when (window-system)
-  (progn   ; unbind C-i from tab for later remapping
-    (define-key input-decode-map (kbd "C-i") (kbd "H-i"))))  
+;; (when (window-system)
+;;   (progn   ; unbind C-i from tab for later remapping
+;;     (define-key input-decode-map (kbd "C-i") (kbd "H-i"))))  
 
 ;; Allow hash to be entered  as M-3
 (global-set-key (kbd "M-3") '(lambda () (interactive) (insert "#")))
 
 ;; key bindings for window manipulation
-(global-set-key (kbd "M-1") 'delete-other-windows)
-(global-set-key (kbd "A-(") 'delete-other-windows)
-(global-set-key (kbd "M-(") 'delete-other-windows) ; for progrmmers keyboard
-(global-set-key (kbd "M-2") 'split-window-below)
-(global-set-key (kbd "A-2") 'split-window-below)
-(global-set-key (kbd "A-)") 'split-window-below)
-(global-set-key (kbd "M-)") 'split-window-below) ; for progrmmers keyboard
-(global-set-key (kbd "A-3") 'split-window-right)
-;;(global-set-key (kbd "M-3") 'split-window-right)
-(global-set-key (kbd "A-}") 'split-window-right) 
-(global-set-key (kbd "M-}") 'split-window-right) ; for progrmmers keyboard
-(global-set-key (kbd "M-o") 'other-window)
-(global-set-key (kbd "A-o") 'other-window)
-(global-set-key (kbd "A-d") 'delete-window)
-;; buffers
-(global-set-key (kbd "A-p") 'previous-buffer)
-(global-set-key (kbd "A-n") 'next-buffer)
+;; (global-set-key (kbd "C-1") 'delete-other-windows) 
+(global-set-key (kbd "A-*") 'split-window-below)
+;; (global-set-key (kbd "ESC <left>") 'split-window-right) 
+;; (global-set-key (kbd "ESC <right>") 'other-window)
+;; (global-set-key (kbd "ESC <up>") 'delete-window)
+;; ;; buffers
 ;; widen and shrink buffer
 (global-set-key (kbd "A-]") 'enlarge-window-horizontally)
 (global-set-key (kbd "A-[") 'shrink-window-horizontally)
@@ -249,23 +211,19 @@
  '(company-quickhelp-color-foreground "white")
  '(company-tooltip-margin 3)
  '(custom-safe-themes
-   (quote
-    ("e654ce0507ae5b2d7feeaef2c07354206781527941e7feb178c0a94be4a98e90" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "0bec8e74ce41664f0e3ce76c0d2cc82804089df70164419af313483651b16bd1" "6ae174add87509daef7a844174f4f985592d70ea05c3d82377ad0a38a380ae80" "10e231624707d46f7b2059cc9280c332f7c7a530ebc17dba7e506df34c5332c4" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default)))
+   '("c158c2a9f1c5fcf27598d313eec9f9dceadf131ccd10abc6448004b14984767c" "869b11b64da20b6b04e9b18721e03a58e5d9f0ee3a7a91bfe7cdc2b24a828109" "a3d40cd364b9a6cc2c33be39b35d7a5bbf872f8943f170bb17bf6156c2674921" "e654ce0507ae5b2d7feeaef2c07354206781527941e7feb178c0a94be4a98e90" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "0bec8e74ce41664f0e3ce76c0d2cc82804089df70164419af313483651b16bd1" "6ae174add87509daef7a844174f4f985592d70ea05c3d82377ad0a38a380ae80" "10e231624707d46f7b2059cc9280c332f7c7a530ebc17dba7e506df34c5332c4" "3c83b3676d796422704082049fc38b6966bcad960f896669dfc21a7a37a748fa" default))
  '(git-gutter:hide-gutter t)
  '(line-number-mode nil)
  '(package-selected-packages
-   (quote
-    (haskell-snippets flyspell-prog-mode auto-dim-other-buffers shakespeare-mode git-gutter diff-hl diff-hl-mode aggressive-indent highlight-symbol all-the-icons-dired neotree gruvbox-theme popwin hightlight-symbol light-symbol-mode light-symbol fic-mode use-package-chords mode-icons spaceline spaceline-config markdown-mode idomenu ace-jump-mode multiple-cursors restclient restclient-mode company-dabbrev-code company-ghc commpany-ghc package-utils async php-ext php-mode company-quickhelp dash git-commit intero with-editor yaml-mode osx-clipboard ghc-imported-from fill-column-indicator centered-cursor-mode magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode)))
+   '(lsp eglot haskell-cabal lsp-ui dap-mode lsp-mode lsp-haskell diminish swift-mode hindent green-phosphor-theme tronesque-theme tron-theme haskell-snippets auto-dim-other-buffers shakespeare-mode git-gutter diff-hl diff-hl-mode aggressive-indent highlight-symbol all-the-icons-dired neotree gruvbox-theme popwin hightlight-symbol light-symbol-mode light-symbol fic-mode mode-icons spaceline spaceline-config markdown-mode idomenu ace-jump-mode multiple-cursors restclient restclient-mode company-dabbrev-code company-ghc commpany-ghc package-utils async php-ext php-mode company-quickhelp dash git-commit intero with-editor yaml-mode osx-clipboard ghc-imported-from fill-column-indicator centered-cursor-mode magit-popup rich-minority use-package line-number-mode iy-go-to-char expand-region magit dash-at-point highlight-parentheses exec-path-from-shell reveal-in-osx-finder company cus-face color-theme smart-mode-line smex header2 haskell-complete-module auto-compile haskell-mode))
  '(safe-local-variable-values
-   (quote
-    ((haskell-process-use-ghci . t)
-     (haskell-indent-spaces . 4)))))
+   '((haskell-process-use-ghci . t)
+     (haskell-indent-spaces . 4))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(company-scrollbar-bg ((t (:background "#454e51"))))
  '(company-scrollbar-fg ((t (:background "#394143"))))
  '(company-tooltip ((t (:inherit default :background "#454e51"))))
  '(company-tooltip-annotation ((t (:inherit font-lock-comment-face))))
@@ -278,23 +236,29 @@
  '(highlight ((t (:background "grey10" :foreground nil)))))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Terminal notifier
+;; this sends messages to the notification panel on a mac
+;; requires 'sudo gem install terminal-notifier'
+;; stolen from erc-notifier
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; flyspell-prog-mode for comments spell checking 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package flyspell-prog-mode :ensure t
-	     :config 
-	     (add-hook 'prog-mode-hook 'flyspell-prog-mode))
+;; (defvar terminal-notifier-command (executable-find "terminal-notifier") "The path to terminal-notifier.")
 
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; yasnippets
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package yasnippet :ensure t
-  :config (yas-global-mode 1))
+;; ;example usage (terminal-notifier-notify "Emacs notification" "Something amusing happened")
 
-(use-package haskell-snippets :ensure t)
+;; (defun terminal-notifier-notify (title message)
+;;   "Show a message with `terminal-notifier-command`."
+;;   (start-process "terminal-notifier"
+;;                  "*terminal-notifier*"
+;;                  terminal-notifier-command
+;;                  "-title" title
+;;                  "-message" message
+;;                  "-activate" "org.gnu.Emacs"))
 
-(setq-default yas-prompt-functions '(yas-ido-prompt yas-dropdown-prompt))
+;; (defun timed-notification (time msg)
+;;   (interactive "sNotification when (e.g: 2 minutes, 60 seconds, 3 days): \nsMessage: ")
+;;   (run-at-time time nil (lambda (msg) (terminal-notifier-notify "Emacs" msg)) msg))
+
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight-symbol
@@ -303,7 +267,7 @@
 (use-package highlight-symbol
   :ensure t
   :config (progn
-	    (setq highlight-symbol-idle-delay 0.3)
+	    (setq highlight-symbol-idle-delay 1)
             (set-face-attribute 'highlight-symbol-face nil
                                 :background "firebrick4"))
   :init (add-hook 'prog-mode-hook 'highlight-symbol-mode))
@@ -319,7 +283,7 @@
 ;; self-insert-command for normal keystrokes are not presented.
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package cl :ensure t)
+
 
 ;; (defvar display-new-message-sb "")
 ;; (defun notify-modeline-form-sb ()
@@ -437,10 +401,10 @@
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; ispell
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(use-package ispell
-  :ensure t
-  :config (progn
-	    (setq ispell-dictionary "english")))
+;; (use-package ispell
+;;   :ensure t
+;;   :config (progn
+;; 	    (setq ispell-dictionary "english")))
 
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -451,9 +415,7 @@
       backup-directory-alist		 ; backups to single directory
 	     '(("." . "~/MyEmacsBackups"))
       delete-by-moving-to-trash t	 ; Move to trash when deleting stuff
-      trash-directory "~/.Trash/emacs"
-      insert-directory-program		 ; use gls for dired 
-      (executable-find "gls"))
+      trash-directory "~/.Trash/emacs")
 
 (when (memq window-system '(mac ns)) ; enable finder open on mac
   (use-package reveal-in-osx-finder  
@@ -463,6 +425,9 @@
 ;; Also auto refresh dired, but be quiet about it
 (setq global-auto-revert-non-file-buffers t)
 (setq auto-revert-verbose nil)
+
+(when (string= system-type "darwin")       
+  (setq dired-use-ls-dired nil))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Prompt and message stuff stuff
@@ -498,11 +463,11 @@
 	 ("C-c x x" . execute-extended-command)
 	 ("C-c s u" . smex-show-unbound-commands))) ; old M-X
 
+(setq load-prefer-newer t)
+
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General text editing stuff
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;(add-hook 'doc-view-mode-hook 'auto-revert-mode)
 
 (delete-selection-mode 1) ; overwrite selected text
 (global-set-key (kbd "M-k") '(lambda () (interactive) (kill-line 0)) ) ;M-k kills to the left
@@ -512,13 +477,6 @@
   :config (progn
             (save-place-mode 1)
             (setq save-place-file (expand-file-name ".places" user-emacs-directory))))
-
-;; (use-package linum			       ; line numbering globally
-;; 	     :ensure t
-;; 	     :config
-;; 	     (progn 
-;; 	       (setq linum-format "%3d\u2502") ; pretify format
-;; 	       (global-linum-mode 1)))
 
 (use-package highlight-parentheses   ; Parenthesis highlighting globally
   :ensure t
@@ -536,7 +494,7 @@
       indent-tabs-mode nil)		 ; use spaces, not <tab>
 
 (setq-default auto-fill-function 'do-auto-fill)
-(setq-default fill-column 140)		  ; we're not in the 70s
+(setq-default fill-column 120)		  ; we're not in the 70s
 					
 (use-package iy-go-to-char		 ; see emacs rocks episode 4
   :ensure t				 ; https://github.com/doitian/iy-go-to-char
@@ -544,48 +502,49 @@
 	 ("M-[" . iy-go-to-char-backward)))
 
 ;; indent yanked text
-(dolist (command '(yank yank-pop))
-  (eval `(defadvice ,command (after indent-region activate)
-	   (and (not current-prefix-arg)
-		(member major-mode '(emacs-lisp-mode lisp-mode
-				     clojure-mode    scheme-mode
-				     haskell-mode    ruby-mode
-				     rspec-mode	     python-mode
-				     c-mode	     c++-mode
-				     objc-mode	     latex-mode
-				     plain-tex-mode))
-		(let ((mark-even-if-inactive transient-mark-mode))
-		  (indent-region (region-beginning) (region-end) nil))))))
+;; (dolist (command '(yank yank-pop))
+;;   (eval `(defadvice ,command (after indent-region activate)
+;; 	   (and (not current-prefix-arg)
+;; 		(member major-mode '(emacs-lisp-mode lisp-mode
+;; 				     clojure-mode    scheme-mode
+;; 				     haskell-mode    ruby-mode
+;; 				     rspec-mode	     python-mode
+;; 				     c-mode	     c++-mode
+;; 				     objc-mode	     latex-mode
+;; 				     plain-tex-mode))
+;; 		(let ((mark-even-if-inactive transient-mark-mode))
+;; 		  (indent-region (region-beginning) (region-end) nil))))))
 
 ;; kill and join lines to avoid indented spaces
-(defun kill-and-join-forward (&optional arg)
-  "If at end of line, join with following; otherwise kill line and indent.
-   Deletes whitespace at join."
-  (interactive "P")
-  (if (and (eolp) (not (bolp)))
-      (delete-indentation t)
-    (progn
-      (kill-line arg))))
+;; (defun kill-and-join-forward (&optional arg)
+;;   "If at end of line, join with following; otherwise kill line and indent.
+;;    Deletes whitespace at join."
+;;   (interactive "P")
+;;   (if (and (eolp) (not (bolp)))
+;;       (delete-indentation t)
+;;     (progn
+;;       (kill-line arg))))
 
-(global-set-key (kbd "C-k") 'kill-and-join-forward)
+;; (global-set-key (kbd "C-k") 'kill-and-join-forward)
 
 ;; modify A-k kills either forward whitespace or next word
-(defun kill-whitespace-or-word ()   
-  (interactive)
-  (if (looking-at "[ \t\n]")
-      (let ((p (point)))
-	(re-search-forward "[^ \t\n]" nil :no-error)
-	(backward-char)
-	(kill-region p (point)))
-    (kill-word 1)))
-(global-set-key (kbd "A-k") 'kill-whitespace-or-word)
+;; (defun kill-whitespace-or-word ()   
+;;   (interactive)
+;;   (if (looking-at "[ \t\n]")
+;;       (let ((p (point)))
+;; 	(re-search-forward "[^ \t\n]" nil :no-error)
+;; 	(backward-char)
+;; 	(kill-region p (point)))
+;;     (kill-word 1)))
+;; (global-set-key (kbd "M-k") 'kill-whitespace-or-word)
 
 ;; backward kill line, leaving point at correct indentation
-(global-set-key (kbd "A-<backspace>") (lambda ()
-					(interactive)
-					(kill-line 0)
-					(indent-according-to-mode)))
+;; (global-set-key (kbd "A-<backspace>") (lambda ()
+;; 					(interactive)
+;; 					(kill-line 0)
+;; 					(indent-according-to-mode)))
 
+;; comment sections
 (defun my-select-current-line ()
   (interactive)
   (move-beginning-of-line nil)
@@ -617,8 +576,8 @@
 
 
 (global-set-key (kbd "M-;") 'comment-eclipse)
-(global-set-key (kbd "A-;") 'comment-eclipse)
-(global-set-key (kbd "C-;") 'comment-dwim)
+(global-set-key (kbd "C-;") 'comment-eclipse)
+(global-set-key (kbd "A-;") 'comment-dwim)
 
 ;; move around faster
 (defun sb/forward-line ()
@@ -626,28 +585,27 @@
   (ignore-errors (forward-line 5)))
   
 (global-set-key (kbd "C-M-n") 'sb/forward-line)
-(global-set-key (kbd "<A-down>") 'sb/forward-line)
+(global-set-key (kbd "M-n") 'scroll-up-command)
 
 (defun sb/backward-line()
   (interactive)
   (ignore-errors (forward-line -5)))
 
 (global-set-key (kbd "C-M-p") 'sb/backward-line)
-(global-set-key (kbd "<A-up>") 'sb/backward-line)
+(global-set-key (kbd "M-p") 'scroll-down-command)
 
 (defun sb/forward-fast ()
   (interactive)
   (ignore-errors (forward-char 10)))
 
 (global-set-key (kbd "C-M-f") 'sb/forward-fast)
-(global-set-key (kbd "<A-right>") 'sb/forward-fast)
 
 (defun sb/backward-fast()
   (interactive)
   (ignore-errors (backward-char 10)))
 
 (global-set-key (kbd "C-M-b") 'sb/backward-fast)
-(global-set-key (kbd "<A-left>") 'sb/backward-fast)
+
 
 ;; scrolling
 (when (display-graphic-p)
@@ -673,21 +631,21 @@
  mouse-wheel-scroll-amount '(2 ((shift) . 4) ((control) . 6)))
 
 ;; create line above or below
-(defun open-line-below ()
-  (interactive)
-  (end-of-line)
-  (newline)
-  (indent-for-tab-command))
+;; (defun open-line-below ()
+;;   (interactive)
+;;   (end-of-line)
+;;   (newline)
+;;   (indent-for-tab-command))
 
-(defun open-line-above ()
-  (interactive)
-  (beginning-of-line)
-  (newline)
-  (forward-line -1)
-  (indent-for-tab-command))
+;; (defun open-line-above ()
+;;   (interactive)
+;;   (beginning-of-line)
+;;   (newline)
+;;   (forward-line -1)
+;;   (indent-for-tab-command))
 
-(global-set-key (kbd "<C-return>") 'open-line-below)
-(global-set-key (kbd "<C-S-return>") 'open-line-above)
+;; (global-set-key (kbd "<C-return>") 'open-line-below)
+;; (global-set-key (kbd "<C-S-return>") 'open-line-above)
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; shell
@@ -772,31 +730,32 @@
      "Menlo"     
      "Consolas"))
 
+
+;; use ligatures for haskell hasklig display etc. 
+(if (fboundp 'mac-auto-operator-composition-mode) (mac-auto-operator-composition-mode))
+
 (unless (eq window-system nil)
   (let ((fonts (font-avail font-preferences)))
     (unless (null fonts)
       (progn
 	(set-face-attribute 'default nil :font (car fonts))
-	(set-face-attribute 'default nil :weight 'light)
+	(set-face-attribute 'default nil :weight 'extra-light)
 
         ;; If we have Hasklig font as default, which supports ligatures for haskell symbols,
         ;; then don't haskel-font-lock-symbols as Hasklig does a better job visually.
         (if (string-match "Hasklig" (car fonts))
             (progn
               (setq haskell-font-lock-symbols nil)
-              (setq mac-auto-operator-composition-mode t)) ;; enable ligatures	  
-          (setq haskell-font-lock-symbols 'unicode))))))
-
+	      (setq haskell-font-lock-symbols 'unicode)
+              (setq mac-auto-operator-composition-mode t) ; enable ligatures
+	      ; use hasklig-mode, but only in window mode
+	      (when (window-system)
+		(use-package hasklig-mode 
+		  :hook (haskell-mode)))))))))
+	  
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Haskell Stuff
-;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-;; no delay on flycheck error
-;; (setq flycheck-display-errors-delay 0)
-;; (setq next-error-recenter 35)
-;;(setq compilation-auto-jump-to-first-error t)
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; next error should scroll round to the top again
 (defun my-next-error-wrapped (&optional arg reset)
@@ -839,7 +798,7 @@ forwards, if negative)."
                        (call-interactively 'previous-error)))))))
   
 ;; put a fringe indicator on the current error
-(define-fringe-bitmap 'custom-right-arrow [128 192 96 48 24 48 96 192 128] 9 8 'center)
+(define-fringe-bitmap 'custom-right-arrow [128 192 96 48 24 48 96 192 100~28] 9 8 'center)
 (put 'overlay-arrow-position 'overlay-arrow-bitmap 'custom-right-arrow)
 (defface right-triangle-face
   '((t (:background "red" :foreground "green")))
@@ -855,7 +814,6 @@ forwards, if negative)."
             (cons '(overlay-arrow . filled-rectangle) fringe-indicator-alist)))))
 (add-hook 'next-error-hook 'bar)
 
-
 ;; code for nice nested indent
 (defun haskell-move-right ()  
   (interactive)
@@ -864,24 +822,104 @@ forwards, if negative)."
   (interactive)
   (haskell-move-nested -1))
 
-(use-package haskell-mode
-  :config (progn
-	    (setq haskell-stylish-on-save t)
-	    (setq haskell-compile-cabal-build-command "stack build")))
+;; haskell
 
-;; load up intero
-(use-package intero
+;; run compile on C-c C-c in cabal file
+(eval-after-load "haskell-cabal"
+  '(define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-compile))
+
+(use-package haskell-mode
   :ensure t
   :bind* ( :map haskell-mode-map
-                ("C-r" . haskell-move-right)	 ; nested right indent
-                ("C-l" . haskell-move-left)	 ; nested left indent
-                ("C-c C-b" . haskell-compile)
-                ("C-`" . my-next-error-wrapped)
-                ("M-`" . my-previous-error-wrapped))
+  		("C-r" . haskell-move-right)	 ; nested right indent
+  		("C-l" . haskell-move-left)	 ; nested left indent
+  		("C-c C-c" . haskell-compile)
+  		("C-," . my-next-error-wrapped)
+  		("C-." . my-previous-error-wrapped)))
+(setq haskell-stylish-on-save t)
+(setq haskell-compile-cabal-build-command "stack build")
+
+;; Helper for compilation. Close the compilation window if
+;; there was no error at all. (emacs wiki)
+(defun compilation-exit-autoclose (status code msg)
+  ;; If M-x compile exists with a 0
+  (when (and (eq status 'exit) (zerop code))
+    ;; then bury the *compilation* buffer, so that C-x b doesn't go there
+    (bury-buffer (get-buffer "*haskell-compilation*"))
+    ;; and delete the *compilation* window
+    (delete-window (get-buffer-window (get-buffer "*haskell-compilation*"))))
+  ;; Always return the anticipated result of compilation-exit-message-function
+  (cons msg code))
+;; Specify my function (maybe I should have done a lambda function)
+(setq compilation-exit-message-function 'compilation-exit-autoclose)
+
+;; Intero project has been discontinued, so switching to haskel-ide-engine and lsp-haskell
+;; intero itself
+;; (use-package intero
+;;   :ensure t
+;;   :bind* ( :map haskell-mode-map
+;; 		("C-r" . haskell-move-right)	 ; nested right indent
+;; 		("C-l" . haskell-move-left)	 ; nested left indent
+;; 		("C-c C-b" . haskell-compile)
+;; 		("C-`" . my-next-error-wrapped)
+;; 		("M-`" . my-previous-error-wrapped)))
+;; (add-hook 'haskell-mode-hook 'intero-mode)
+
+(use-package lsp-mode
+  :ensure t
+  :hook (haskell-mode . lsp)
+  :commands lsp)
+
+
+(use-package lsp-ui
+  ;; :commands lsp-ui-mode
   :config
-  (progn 
-    (add-hook 'haskell-mode-hook 'intero-mode)))
-    
+  (progn
+    (setq lsp-ui-doc-enable t
+          lsp-ui-doc-border "white"  ; "deep sky blue"        
+          lsp-enable-completion-at-point t
+          lsp-ui-doc-position 'top
+          lsp-ui-doc-header t
+          lsp-ui-doc-include-signature nil
+          lsp-ui-sideline-enable t)
+    (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+    (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)))
+
+(add-hook 'lsp-mode-hook 'lsp-ui-mode)
+(add-hook 'haskell-mode-hook 'flycheck-mode)
+
+
+(use-package lsp-ui-peek
+  :config
+  (setq lsp-ui-peek-enable t))
+
+;; hindent
+(use-package hindent
+  :ensure t)
+(add-hook 'haskell-mode-hook #'hindent-mode)
+
+
+(require 'lsp)
+(use-package lsp-haskell
+  :ensure t)
+(add-hook 'haskell-mode-hook #'lsp)
+
+(setq lsp-haskell-process-path-hie "hie-wrapper")
+;;(setq lsp-haskell-process-args-hie '())
+;(setq lsp-prefer-flymake nil)
+
+
+;; optionally
+;;(use-package lsp-ui :commands lsp-ui-mode)
+;;(use-package company-lsp :commands company-lsp)
+;;(use-package helm-lsp :commands helm-lsp-workspace-symbol)
+;;(use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+;; optionally if you want to use debugger
+;; (use-package dap-mode)
+;; (use-package dap-haskell) ;; to load the dap adapter for your language
+
+
+
 ;; (use-package flycheck
 ;;   :ensure t
 ;;   :config (flycheck-add-next-checker 'intero '(warning . haskell-hlint)))
@@ -891,47 +929,63 @@ forwards, if negative)."
 ;;             (with-eval-after-load 'flycheck
 ;;               '(add-hook 'flycheck-mode-hook 'flycheck-popup-tip-mode))))
 
-(use-package company
-  :ensure t
-  :functions company-quickhelp-manual-begin
-  :config
-  (progn 
-    (add-hook 'after-init-hook 'global-company-mode)
-    ;; (add-to-list 'company-backends 'company-yasnippet)
-    ;;(add-to-list 'company-backends '(company-ghc :with company-dabbrev-code))    
-    (setq company-ghc-show-info t)
-    (add-hook 'haskell-mode-hook 'company-mode)
-    ;; (setq company-idle-delay 0)
-    (setq company-minimum-prefix-length 2)
-    ;; set up color package to pretify company tooltips etc. 
-    (use-package color
-      :ensure t
-      :functions color-lighten-name
-      :config (progn
-		(let ((bg (face-attribute 'default :background)))
-		  (custom-set-faces
-		   `(company-tooltip ((t (:inherit default :background, (color-lighten-name bg 10)))))
-		   `(company-scrollbar-bg ((t (:background, (color-lighten-name bg 10)))))
-		   `(company-scrollbar-fg ((t (:background, (color-lighten-name bg 5)))))
-		   `(company-tooltip-selection ((t (:inherit font-lock-function-name-face :background "darkgreen"))))
-		   `(company-tooltip-annotation((t (:inherit font-lock-comment-face))))))))	   
-    (eval-after-load 'company
-      '(define-key company-active-map (kbd "C-c h") #'company-quickhelp-manual-begin))))
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; tabnine deep learnign autocomplete
+;;(use-package company-tabnine :ensure t)
 
-(use-package company-ghc :ensure t
-  :config (progn
-	    (add-hook 'haskell-mode-hook (lambda ()
-					   ;;(ghc-init)
-					   (add-to-list 'company-backends 'company-ghc)))
-	    (autoload 'ghc-init "ghc" nil t)
-	    (autoload 'ghc-debug "ghc" nil t)))
-	    
-(use-package company-quickhelp
+(use-package company 
   :ensure t
-  :bind (("A-g" . company-ghc-complete-by-hoogle)
-	 ("A-m" . company-ghc-complete-in-module))
-  :config (progn 
-	    (company-quickhelp-mode 1)))
+  :config
+  (progn ;;(add-to-list 'company-backends #'company-tabnine)
+	 ;; Trigger completion immediately.
+	 ;;(setq company-idle-delay 0)
+	 
+	 ;; Number the candidates (use M-1, M-2 etc to select completions).
+	 (setq company-show-numbers t)))
+
+
+
+;; (use-package company
+;;   :ensure t
+;;   :functions company-quickhelp-manual-begin
+;;   :config
+;;   (progn 
+;;     (add-hook 'after-init-hook 'global-company-mode)
+;;     ;; (add-to-list 'company-backends 'company-yasnippet)
+;;     ;;(add-to-list 'company-backends '(company-ghc :with company-dabbrev-code))    
+;;     (setq company-ghc-show-info t)
+;;     (add-hook 'haskell-mode-hook 'company-mode)
+;;     ;; (setq company-idle-delay 0)
+;;     (setq company-minimum-prefix-length 2)
+;;     ;; set up color package to pretify company tooltips etc. 
+;;     (use-package color
+;;       :ensure t
+;;       :functions color-lighten-name
+;;       :config (progn
+;; 		(let ((bg (face-attribute 'default :background)))
+;; 		  (custom-set-faces
+;; 		   `(company-tooltip ((t (:inherit default :background, (color-lighten-name bg 10)))))
+;; 		   `(company-scrollbar-bg ((t (:background, (color-lighten-name bg 10)))))
+;; 		   `(company-scrollbar-fg ((t (:background, (color-lighten-name bg 5)))))
+;; 		   `(company-tooltip-selection ((t (:inherit font-lock-function-name-face :background "darkgreen"))))
+;; 		   `(company-tooltip-annotation((t (:inherit font-lock-comment-face))))))))	   
+;;     (eval-after-load 'company
+;;       '(define-key company-active-map (kbd "C-c h") #'company-quickhelp-manual-begin))))
+
+;; (use-package company-ghc :ensure t
+;;   :config (progn
+;; 	    (add-hook 'haskell-mode-hook (lambda ()
+;; 					   ;;(ghc-init)
+;; 					   (add-to-list 'company-backends 'company-ghc)))
+;; 	    ;;(autoload 'ghc-init "ghc" nil t)
+;; 	    (autoload 'ghc-debug "ghc" nil t)))
+	    
+;; (use-package company-quickhelp
+;;   :ensure t
+;;   :bind (("A-g" . company-ghc-complete-by-hoogle)
+;; 	 ("A-m" . company-ghc-complete-in-module))
+;;   :config (progn 
+;; 	    (company-quickhelp-mode 1)))
 
 ;; display TODO: comments in red, do lambdas etc. 
 (defun pretty-lambdas-haskell ()
@@ -963,15 +1017,15 @@ forwards, if negative)."
 ;; Documentation Browsers 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-package dash-at-point
-  :ensure t
-  :config (progn
-            (add-hook 'haskell-mode-hook
-                      (lambda () (setq dash-at-point-docset "haskell")))
-            (add-hook 'lisp-mode-hook
-                      (lambda () (setq dash-at-point-docset "lisp"))))
-  :bind (("C-c d" . dash-at-point)
-         ("C-c e" . dash-at-point-with-docset)))
+;; (use-package dash-at-point
+;;   :ensure t
+;;   :config (progn
+;;             (add-hook 'haskell-mode-hook
+;;                       (lambda () (setq dash-at-point-docset "haskell")))
+;;             (add-hook 'lisp-mode-hook
+;;                       (lambda () (setq dash-at-point-docset "lisp"))))
+;;   :bind (("C-c p" . dash-at-point)
+;;          ("C-c e" . dash-at-point-with-docset)))
 
 ;; ghc-imported-from - front end for ghc-imported-from for finding haddock documentation
 ;; for symbols in
@@ -1056,11 +1110,7 @@ forwards, if negative)."
 
 (use-package magit                 ; Magit for git integration
 	     :ensure t
-	     :bind (("C-c m o" . magit-clone)
-		    ("C-c m s" . magit-status)
-		    ("C-c m b" . magit-blame)
-		    ("C-c m l" . magit-log-buffer-file)
-		    ("C-c m p" . magit-pull))
+	     :bind (("C-c m"   . magit-status))
 	     :config
 	     (progn
 	       (setq magit-save-repository-buffers 'dontask)
@@ -1088,20 +1138,27 @@ forwards, if negative)."
 	    (custom-set-variables
 	     '(git-gutter:hide-gutter t))))
 
+;; mode for editing git commit messages
 (use-package git-commit
   :ensure nil
   :preface
   (defun me/git-commit-set-fill-column ()
     (setq-local comment-auto-fill-only-comments nil)
-    (setq fill-column 72))
+    (setq fill-column 100))
   :config
   (advice-add 'git-commit-turn-on-auto-fill :before #'me/git-commit-set-fill-column))
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; temp file directory
+(setq temporary-file-directory "~/.emacs.d/tmp/")
+
+;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Restclient-model
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (use-package restclient
-  :ensure t
+  ;; :ensure t
   :bind (("C-9" . idomenu)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1132,7 +1189,7 @@ forwards, if negative)."
   :config (progn
             (setq ace-jump-mode-gray-background nil)
             (setq ace-jump-mode-case-fold t))
-  :bind (("C-j" . ace-jump-mode)))
+  :bind (("C-!" . ace-jump-mode)))
 
 ;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; idomenu
@@ -1182,7 +1239,5 @@ forwards, if negative)."
   (interactive)
   (insert (format-time-string "%c" (current-time))))   
 
-(global-set-key "\C-cd" 'insert-date)
-
-(set-background-color "#202020")
+(set-background-color "#131813")
 ;;; init.el ends here
